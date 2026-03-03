@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2 } from "lucide-react";
+import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2, Lock, Unlock, Trash2, Copy, Database, Key } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { profileService, UserStats, ScanHistory, UserProfile } from "@/lib/profileService";
+import { profileService, UserStats, ScanHistory, UserProfile, VaultEntry } from "@/lib/profileService";
 import { toast } from "sonner";
 import { useRef } from "react";
 
@@ -13,6 +13,10 @@ export default function Profile() {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
+    const [vaultEntries, setVaultEntries] = useState<VaultEntry[]>([]);
+    const [vaultCode, setVaultCode] = useState("");
+    const [vaultUnlocked, setVaultUnlocked] = useState(false);
+    const [unlocking, setUnlocking] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -74,9 +78,13 @@ export default function Profile() {
                                             const url = await profileService.uploadAvatar(file);
                                             setProfile({ avatar_url: url });
                                             toast.success("Profile picture updated!");
-                                        } catch (error) {
+                                        } catch (error: any) {
                                             console.error("Upload error:", error);
-                                            toast.error("Failed to upload image");
+                                            if (error.message?.includes('Bucket not found')) {
+                                                toast.error("Avatar storage not setup. Please create 'avatars' bucket in Supabase.");
+                                            } else {
+                                                toast.error("Failed to upload image");
+                                            }
                                         } finally {
                                             setUploading(false);
                                         }
@@ -219,6 +227,140 @@ export default function Profile() {
                         </table>
                     </div>
                 </motion.div>
+
+                {/* Cyber Vault Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="glass rounded-[2rem] border-2 border-primary/20 p-8 shadow-2xl relative overflow-hidden"
+                >
+                    <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
+                        <Lock className="h-32 w-32 text-primary" />
+                    </div>
+
+                    <div className="flex items-center justify-between mb-8 relative z-10">
+                        <div className="flex items-center gap-3">
+                            <Database className="h-6 w-6 text-primary" />
+                            <h2 className="text-xl font-bold text-foreground uppercase italic pb-1 border-b-2 border-primary/30">Cyber Vault Locker</h2>
+                        </div>
+                        {vaultUnlocked && (
+                            <button
+                                onClick={() => { setVaultUnlocked(false); setVaultEntries([]); setVaultCode(""); }}
+                                className="text-[10px] font-black text-neon-red uppercase tracking-widest border border-neon-red/30 px-3 py-1.5 rounded-lg hover:bg-neon-red/10 transition-all"
+                            >
+                                Lock Vault
+                            </button>
+                        )}
+                    </div>
+
+                    {!vaultUnlocked ? (
+                        <div className="flex flex-col items-center justify-center py-12 max-w-sm mx-auto text-center space-y-6 relative z-10">
+                            <div className="p-4 rounded-full bg-primary/10 text-primary mb-2">
+                                <Lock className="h-10 w-10" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-lg font-bold text-foreground uppercase tracking-widest italic">Vault Is Encrypted</h3>
+                                <p className="text-sm text-muted-foreground">Enter your Secret Access Code to synchronize and decrypt your saved assets.</p>
+                            </div>
+                            <div className="w-full flex gap-2">
+                                <input
+                                    type="password"
+                                    value={vaultCode}
+                                    onChange={(e) => setVaultCode(e.target.value)}
+                                    placeholder="Secret Code..."
+                                    className="flex-1 rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground focus:border-primary outline-none transition-all font-mono"
+                                />
+                                <button
+                                    onClick={async () => {
+                                        if (!vaultCode) return;
+                                        setUnlocking(true);
+                                        try {
+                                            const entries = await profileService.getVaultEntries(vaultCode);
+                                            if (entries.length === 0) {
+                                                toast.error("Incorrect code or no entries found");
+                                            } else {
+                                                setVaultEntries(entries);
+                                                setVaultUnlocked(true);
+                                                toast.success("Vault synchronization complete");
+                                            }
+                                        } catch (error) {
+                                            toast.error("Failed to sync vault");
+                                        } finally {
+                                            setUnlocking(false);
+                                        }
+                                    }}
+                                    disabled={unlocking}
+                                    className="bg-primary text-primary-foreground px-6 rounded-xl font-bold text-sm tracking-tighter hover:glow-primary transition-all disabled:opacity-50"
+                                >
+                                    {unlocking ? <Loader2 className="h-4 w-4 animate-spin" /> : "UNLOCK"}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
+                            {vaultEntries.map((entry) => (
+                                <VaultCard key={entry.id} entry={entry} onDelete={async () => {
+                                    try {
+                                        await profileService.deleteVaultEntry(entry.id);
+                                        setVaultEntries(prev => prev.filter(e => e.id !== entry.id));
+                                        toast.success("Asset purged from vault");
+                                    } catch (error) {
+                                        toast.error("Failed to purge asset");
+                                    }
+                                }} />
+                            ))}
+                        </div>
+                    )}
+                </motion.div>
+            </div>
+        </div>
+    );
+}
+
+function VaultCard({ entry, onDelete }: { entry: VaultEntry; onDelete: () => void }) {
+    const [revealed, setRevealed] = useState(false);
+
+    return (
+        <div className="glass rounded-2xl border border-border/50 p-5 group hover:border-primary/30 transition-all flex flex-col justify-between h-full">
+            <div>
+                <div className="flex justify-between items-start mb-4">
+                    <div className="p-2 rounded-lg bg-secondary text-primary">
+                        <Key className="h-4 w-4" />
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                navigator.clipboard.writeText(entry.password);
+                                toast.success("Password copied");
+                            }}
+                            className="p-1.5 text-muted-foreground hover:text-primary transition-colors hover:bg-primary/10 rounded-md"
+                        >
+                            <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            onClick={onDelete}
+                            className="p-1.5 text-muted-foreground hover:text-neon-red transition-colors hover:bg-neon-red/10 rounded-md"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                    </div>
+                </div>
+                <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">{entry.service_name}</h4>
+                <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-border/50 group/pass">
+                    <div className="font-mono text-sm tracking-tighter flex-1 truncate">
+                        {revealed ? entry.password : "••••••••••••••••"}
+                    </div>
+                    <button
+                        onClick={() => setRevealed(!revealed)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        {revealed ? <Eye className="h-4 w-4" /> : <Eye className="h-4 w-4 opacity-30" />}
+                    </button>
+                </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/30 text-[10px] font-mono text-muted-foreground">
+                SAVED: {new Date(entry.created_at).toLocaleDateString()}
             </div>
         </div>
     );

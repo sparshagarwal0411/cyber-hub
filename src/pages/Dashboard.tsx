@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw } from "lucide-react";
+import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { virusTotal } from "@/lib/virusTotal";
 import { geminiService } from "@/lib/gemini";
@@ -583,9 +583,81 @@ function URLRadar() {
   );
 }
 
-// --- Identity Shield ---
+// --- Identity Shield Components ---
+function VaultSaveModal({ isOpen, onClose, password, onSave }: { isOpen: boolean; onClose: () => void; password: string; onSave: (service: string, code: string) => void }) {
+  const [service, setService] = useState("");
+  const [code, setCode] = useState("");
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-background/80 backdrop-blur-sm"
+      />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="glass border-2 border-primary/30 rounded-[2rem] p-8 max-w-md w-full relative z-10 shadow-2xl"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+              <Lock className="h-5 w-5" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground italic uppercase">Cyber Vault</h3>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-6">
+          Securely store this generated password in your personal locker.
+          <span className="text-primary font-bold ml-1">Remember your Secret Access Code</span> to retrieve it later in your Profile.
+        </p>
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Service / Account Name</label>
+            <input
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+              placeholder="e.g. Google, My Bank, Instagram..."
+              className="w-full rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Secret Access Code</label>
+            <input
+              type="password"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Set a 4+ digit secret code..."
+              className="w-full rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
+            />
+          </div>
+
+          <button
+            onClick={() => onSave(service, code)}
+            disabled={!service || !code}
+            className="w-full mt-4 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground hover:glow-primary transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Save className="h-4 w-4" /> SECURE IN VAULT
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 function IdentityShield() {
   const [password, setPassword] = useState("");
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const entropy = password.length > 0
     ? (() => {
@@ -615,10 +687,33 @@ function IdentityShield() {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(password);
     toast.success("Password copied to clipboard!");
+    if (password) {
+      setIsVaultOpen(true);
+    }
+  };
+
+  const handleVaultSave = async (service: string, code: string) => {
+    setSaving(true);
+    try {
+      await profileService.saveToVault(service, password, code);
+      toast.success("Password secured in your Cyber Vault");
+      setIsVaultOpen(false);
+    } catch (error) {
+      console.error("Vault error:", error);
+      toast.error("Failed to secure password");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="flex flex-col gap-6 h-full py-4">
+    <div className="flex flex-col gap-6 h-full py-4 relative">
+      <VaultSaveModal
+        isOpen={isVaultOpen}
+        onClose={() => setIsVaultOpen(false)}
+        password={password}
+        onSave={handleVaultSave}
+      />
       <div className="space-y-3">
         <label className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] px-1">Vault Key Evaluator</label>
         <div className="relative group">

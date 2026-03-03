@@ -20,6 +20,13 @@ export interface UserProfile {
     avatar_url: string | null;
 }
 
+export interface VaultEntry {
+    id: string;
+    service_name: string;
+    password: string;
+    created_at: string;
+}
+
 export const profileService = {
     async logScan(type: 'URL' | 'PDF' | 'Visual', target: string, risk: string, details: string) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -136,5 +143,48 @@ export const profileService = {
         if (updateError) throw updateError;
 
         return publicUrl;
+    },
+
+    async saveToVault(service: string, pass: string, code: string) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { error } = await supabase
+            .from('vault_entries')
+            .insert({
+                user_id: user.id,
+                service_name: service,
+                password: pass,
+                access_code: code
+            });
+
+        if (error) throw error;
+    },
+
+    async getVaultEntries(code: string): Promise<VaultEntry[]> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase
+            .from('vault_entries')
+            .select('id, service_name, password, created_at')
+            .eq('user_id', user.id)
+            .eq('access_code', code);
+
+        if (error) {
+            console.error('Error fetching vault entries:', error);
+            return [];
+        }
+
+        return data as VaultEntry[];
+    },
+
+    async deleteVaultEntry(id: string) {
+        const { error } = await supabase
+            .from('vault_entries')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };

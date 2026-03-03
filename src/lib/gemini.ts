@@ -16,7 +16,7 @@ export const geminiService = {
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         // Convert file to base64
         const base64Data = await new Promise<string>((resolve, reject) => {

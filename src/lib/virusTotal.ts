@@ -1,5 +1,5 @@
 const VT_API_KEY = import.meta.env.VITE_VIRUSTOTAL_API_KEY;
-const BASE_URL = 'https://www.virustotal.com/api/v3';
+const BASE_URL = '/api/vt';
 
 export interface ScanResult {
     id: string;

@@ -49,10 +49,14 @@ export const profileService = {
             .from('user_stats')
             .select('*')
             .eq('user_id', user.id)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error('Error fetching stats:', error);
+            return { total_scans: 0, pdf_scans: 0, url_scans: 0, visual_scans: 0 };
+        }
+
+        if (!data) {
             return { total_scans: 0, pdf_scans: 0, url_scans: 0, visual_scans: 0 };
         }
 

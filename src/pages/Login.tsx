@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shield, Lock, Eye, EyeOff, RefreshCw } from "lucide-react";
+import { Shield, Lock, Eye, EyeOff, RefreshCw, Github, Chrome } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 function generateCaptcha() {
   const ops = ["+", "-", "×"];
@@ -40,13 +41,14 @@ export default function Login() {
   const [captchaInput, setCaptchaInput] = useState("");
   const [captcha, setCaptcha] = useState(generateCaptcha);
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const refreshCaptcha = useCallback(() => {
     setCaptcha(generateCaptcha());
     setCaptchaInput("");
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (parseInt(captchaInput) !== captcha.answer) {
@@ -61,12 +63,50 @@ export default function Login() {
     }
 
     setLoading(true);
-    // Simulate login
-    setTimeout(() => {
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: email.split("@")[0],
+            }
+          }
+        });
+        if (error) throw error;
+        toast.success("Registration request sent. Please check your email for confirmation.");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Access granted. Welcome to CyberShield.");
+        navigate("/dashboard");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Authentication failed. Please verify your credentials.");
+    } finally {
       setLoading(false);
-      toast.success("Access granted. Welcome to CyberShield.");
-      navigate("/dashboard");
-    }, 1200);
+    }
+  };
+
+  const handleOAuthLogin = async (provider: "google" | "github") => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || `Failed to sign in with ${provider}`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,14 +123,23 @@ export default function Login() {
         transition={{ duration: 0.6 }}
         className="relative w-full max-w-md"
       >
-        <div className="glass-strong rounded-2xl p-8 neon-border">
+        <div className="glass-strong rounded-2xl p-8 neon-border relative overflow-hidden">
+          {/* Scan line effect */}
+          <div className="absolute inset-x-0 h-24 scan-line pointer-events-none opacity-20" />
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex rounded-full bg-primary/10 p-3 mb-4">
               <Shield className="h-8 w-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Secure Access Gate</h1>
-            <p className="text-sm text-muted-foreground mt-1">Authenticate to access the defense hub</p>
+            <h1 className="text-2xl font-bold text-foreground">
+              {isSignUp ? "Initialize Defense Profile" : "Secure Access Gate"}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {isSignUp
+                ? "Enroll in the shield network to protect your zone"
+                : "Authenticate to access the defense hub"
+              }
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -169,16 +218,62 @@ export default function Login() {
               {loading ? (
                 <span className="inline-flex items-center gap-2">
                   <Lock className="h-4 w-4 animate-pulse" />
-                  Authenticating...
+                  Processing...
                 </span>
               ) : (
                 <span className="inline-flex items-center gap-2">
                   <Lock className="h-4 w-4" />
-                  Access Command Center
+                  {isSignUp ? "Initialize Protocol" : "Access Command Center"}
                 </span>
               )}
             </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-xs text-muted-foreground hover:text-primary transition-colors font-mono"
+            >
+              {isSignUp
+                ? "ALREADY ENROLLED? PROCEED TO LOGIN"
+                : "NEW OPERATOR? INITIALIZE ACCESS"}
+            </button>
+          </div>
+
+          <div className="mt-8">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground font-mono">
+                  Identity Verification Providers
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin("github")}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary/30 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-secondary/50 hover:border-primary/50 disabled:opacity-50"
+              >
+                <Github className="h-4 w-4" />
+                <span>GitHub</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOAuthLogin("google")}
+                disabled={loading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-secondary/30 py-2.5 text-sm font-medium text-foreground transition-all hover:bg-secondary/50 hover:border-primary/50 disabled:opacity-50"
+              >
+                <Chrome className="h-4 w-4" />
+                <span>Google</span>
+              </button>
+            </div>
+          </div>
 
           <p className="text-center text-xs text-muted-foreground mt-6 font-mono">
             ENCRYPTED • ZERO-TRUST • PRIVACY-FIRST

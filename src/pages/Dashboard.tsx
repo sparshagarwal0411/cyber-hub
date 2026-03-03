@@ -266,14 +266,17 @@ function VisualGuard() {
 function PDFChecker() {
   const [result, setResult] = useState<null | { safe: boolean; issues: string[]; risk: "LOW" | "MEDIUM" | "HIGH" }>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setError(null);
       if (file.type !== "application/pdf") {
-        toast.error("Please select a valid PDF file");
+        setError("No PDF found");
+        setFileName(null);
         return;
       }
       setFileName(file.name);
@@ -335,6 +338,17 @@ function PDFChecker() {
           <p className="text-sm text-muted-foreground mb-6 max-w-xs mx-auto">
             Detect hidden exploits, malicious macros, and suspicious automatic actions in PDF documents.
           </p>
+
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-neon-red text-xs font-bold uppercase tracking-widest mb-4 font-mono"
+            >
+              !! {error} !!
+            </motion.div>
+          )}
+
           <button
             onClick={() => fileInputRef.current?.click()}
             className="rounded-xl bg-primary px-8 py-3 text-sm font-bold text-primary-foreground hover:glow-primary transition-all shadow-lg active:scale-95 flex items-center gap-2 mx-auto"
@@ -428,9 +442,19 @@ function URLRadar() {
   const [url, setUrl] = useState("");
   const [result, setResult] = useState<null | { risk: "LOW" | "MEDIUM" | "HIGH"; issues: string[]; details: any }>(null);
   const [checking, setChecking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCheck = async () => {
     if (!url.trim()) return;
+
+    // Simple URL validation
+    const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+    if (!urlPattern.test(url)) {
+      setError("No link found");
+      return;
+    }
+
+    setError(null);
     setChecking(true);
     setResult(null);
 
@@ -478,7 +502,7 @@ function URLRadar() {
             <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <input
               value={url}
-              onChange={(e) => setUrl(e.target.value)}
+              onChange={(e) => { setUrl(e.target.value); setError(null); }}
               onKeyDown={(e) => e.key === "Enter" && handleCheck()}
               placeholder="Enter URL (e.g., https://yourbank.secure.com)..."
               className="w-full rounded-xl border border-border bg-secondary/30 pl-11 pr-4 py-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
@@ -492,6 +516,15 @@ function URLRadar() {
             SCAN
           </button>
         </div>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="text-neon-red text-[10px] font-bold uppercase tracking-widest px-1 mt-2 font-mono"
+          >
+            !! {error} !!
+          </motion.div>
+        )}
       </div>
 
       {checking && (
@@ -664,11 +697,11 @@ function IdentityShield() {
 
 // --- Dashboard ---
 const tools = [
-  { id: "chatbot", icon: Bot, label: "Vigilante Chatbot", desc: "Social engineering analyzer", component: VigilanteChatbot },
-  { id: "visual", icon: Eye, label: "Visual Guard", desc: "Image & QR scanner", component: VisualGuard },
-  { id: "pdf", icon: FileSearch, label: "PDF Armor", desc: "Exploit & macro detector", component: PDFChecker },
-  { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", component: URLRadar },
-  { id: "identity", icon: Key, label: "Identity Shield", desc: "Military-grade key analyzer", component: IdentityShield },
+  { id: "chatbot", icon: Bot, label: "Vigilante Chatbot", desc: "Social engineering analyzer", brief: "Analyze suspicious messages or emails for social engineering tactics and rating threat levels.", component: VigilanteChatbot },
+  { id: "visual", icon: Eye, label: "Visual Guard", desc: "Image & QR scanner", brief: "Scan images, QR codes, or screenshots for hidden phishing attempts and fraudulent visual cues.", component: VisualGuard },
+  { id: "pdf", icon: FileSearch, label: "PDF Armor", desc: "Exploit & macro detector", brief: "In-depth analysis of PDF documents to detect malicious macros, hidden scripts, and exploits.", component: PDFChecker },
+  { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", brief: "Analyze domain infrastructure, SSL certificates, and server reputation for potential threats.", component: URLRadar },
+  { id: "identity", icon: Key, label: "Identity Shield", desc: "Military-grade key analyzer", brief: "Evaluate password strength and generate high-entropy mnemonics for secure vault keys.", component: IdentityShield },
 ];
 
 export default function Dashboard() {
@@ -740,6 +773,24 @@ export default function Dashboard() {
               {/* Background decorative elements */}
               <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
               <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-neon-cyan/5 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="mb-6 pb-6 border-b border-border/50 relative z-10">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                    {(() => {
+                      const tool = tools.find(t => t.id === activeTab);
+                      const ToolIcon = tool?.icon || Bot;
+                      return <ToolIcon className="h-5 w-5" />;
+                    })()}
+                  </div>
+                  <h2 className="text-xl font-black text-foreground uppercase tracking-tight italic">
+                    {tools.find(t => t.id === activeTab)?.label}
+                  </h2>
+                </div>
+                <p className="text-sm text-muted-foreground font-medium max-w-2xl leading-relaxed">
+                  {tools.find(t => t.id === activeTab)?.brief}
+                </p>
+              </div>
 
               <ActiveComponent />
             </motion.div>

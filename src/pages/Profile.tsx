@@ -1,25 +1,31 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { profileService, UserStats, ScanHistory } from "@/lib/profileService";
+import { profileService, UserStats, ScanHistory, UserProfile } from "@/lib/profileService";
 import { toast } from "sonner";
+import { useRef } from "react";
 
 export default function Profile() {
     const { user } = useAuth();
     const [stats, setStats] = useState<UserStats | null>(null);
     const [history, setHistory] = useState<ScanHistory[]>([]);
+    const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         async function fetchData() {
             try {
-                const [s, h] = await Promise.all([
+                const [s, h, p] = await Promise.all([
                     profileService.getStats(),
-                    profileService.getHistory()
+                    profileService.getHistory(),
+                    profileService.getProfile()
                 ]);
                 setStats(s);
                 setHistory(h);
+                setProfile(p);
             } catch (error) {
                 console.error("Error fetching profile data:", error);
                 toast.error("Failed to load profile data");
@@ -54,11 +60,47 @@ export default function Profile() {
                     </div>
 
                     <div className="flex flex-col md:flex-row items-center gap-6 relative z-10">
-                        <div className="relative">
-                            <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center border-2 border-primary/30">
-                                <UserIcon className="h-12 w-12 text-primary" />
+                        <div className="relative group">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        setUploading(true);
+                                        try {
+                                            const url = await profileService.uploadAvatar(file);
+                                            setProfile({ avatar_url: url });
+                                            toast.success("Profile picture updated!");
+                                        } catch (error) {
+                                            console.error("Upload error:", error);
+                                            toast.error("Failed to upload image");
+                                        } finally {
+                                            setUploading(false);
+                                        }
+                                    }
+                                }}
+                            />
+                            <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center border-2 border-primary/30 overflow-hidden relative">
+                                {profile?.avatar_url ? (
+                                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserIcon className="h-12 w-12 text-primary" />
+                                )}
+                                {uploading && (
+                                    <div className="absolute inset-0 bg-background/50 flex items-center justify-center">
+                                        <Loader2 className="h-6 w-6 text-primary animate-spin" />
+                                    </div>
+                                )}
                             </div>
-                            <div className="absolute -bottom-2 -right-2 bg-neon-green h-6 w-6 rounded-full border-4 border-background" />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -bottom-2 -right-2 bg-primary text-primary-foreground h-8 w-8 rounded-full border-4 border-background flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                            >
+                                <Pencil className="h-3.5 w-3.5" />
+                            </button>
                         </div>
 
                         <div className="text-center md:text-left space-y-1">
@@ -147,10 +189,10 @@ export default function Profile() {
                                             </td>
                                             <td className="py-4 px-2">
                                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${item.risk === 'HIGH' || item.risk === 'CRITICAL'
-                                                        ? 'bg-neon-red/10 text-neon-red border border-neon-red/20'
-                                                        : item.risk === 'MEDIUM'
-                                                            ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
-                                                            : 'bg-neon-green/10 text-neon-green border border-neon-green/20'
+                                                    ? 'bg-neon-red/10 text-neon-red border border-neon-red/20'
+                                                    : item.risk === 'MEDIUM'
+                                                        ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                                                        : 'bg-neon-green/10 text-neon-green border border-neon-green/20'
                                                     }`}>
                                                     {item.risk === 'HIGH' || item.risk === 'CRITICAL' ? <AlertTriangle className="h-3 w-3" /> : <CheckCircle className="h-3 w-3" />}
                                                     {item.risk}

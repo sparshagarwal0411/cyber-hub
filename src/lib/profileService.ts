@@ -16,6 +16,10 @@ export interface UserStats {
     visual_scans: number;
 }
 
+export interface UserProfile {
+    avatar_url: string | null;
+}
+
 export const profileService = {
     async logScan(type: 'URL' | 'PDF' | 'Visual', target: string, risk: string, details: string) {
         const { data: { user } } = await supabase.auth.getUser();
@@ -84,5 +88,53 @@ export const profileService = {
         }
 
         return data as ScanHistory[];
+    },
+
+    async getProfile(): Promise<UserProfile | null> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        if (error) {
+            console.error('Error fetching profile:', error);
+            return null;
+        }
+
+        return data;
+    },
+
+    async uploadAvatar(file: File): Promise<string> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const fileExt = file.name.split('.').pop();
+        const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+        // 1. Upload to storage
+        const { error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 2. Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+        // 3. Update profiles table
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+            .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        return publicUrl;
     }
 };

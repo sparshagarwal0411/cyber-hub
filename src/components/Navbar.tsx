@@ -5,11 +5,24 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { profileService, UserProfile } from "@/lib/profileService";
+import { useEffect } from "react";
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      if (user) {
+        const p = await profileService.getProfile();
+        setProfile(p);
+      }
+    }
+    fetchProfile();
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut();
@@ -47,12 +60,23 @@ export default function Navbar() {
             </Link>
           ))}
           {user ? (
-            <button
-              onClick={handleLogout}
-              className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-2 text-sm font-semibold text-primary transition-all hover:bg-primary/10 font-mono"
-            >
-              LOGOUT
-            </button>
+            <div className="flex items-center gap-4">
+              <Link to="/profile" className="w-9 h-9 rounded-full overflow-hidden border border-primary/30 hover:border-primary transition-colors">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                )}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-primary/30 bg-primary/5 px-5 py-2 text-sm font-semibold text-primary transition-all hover:bg-primary/10 font-mono"
+              >
+                LOGOUT
+              </button>
+            </div>
           ) : (
             <Link
               to="/login"

@@ -12,16 +12,24 @@ CREATE TABLE IF NOT EXISTS public.vault_entries (
 ALTER TABLE public.vault_entries ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies
+DROP POLICY IF EXISTS "Users can only see their own vault entries if code matches" ON public.vault_entries;
 CREATE POLICY "Users can only see their own vault entries if code matches" 
 ON public.vault_entries FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own vault entries" ON public.vault_entries;
 CREATE POLICY "Users can insert their own vault entries" 
 ON public.vault_entries FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete their own vault entries" ON public.vault_entries;
 CREATE POLICY "Users can delete their own vault entries" 
 ON public.vault_entries FOR DELETE 
+USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update their own vault entries" ON public.vault_entries;
+CREATE POLICY "Users can update their own vault entries" 
+ON public.vault_entries FOR UPDATE 
 USING (auth.uid() = user_id);
 
 -- Index for performance on searches

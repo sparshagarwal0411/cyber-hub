@@ -630,8 +630,17 @@ function VaultSaveModal({ isOpen, onClose, password, onSave }: { isOpen: boolean
               className="w-full rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Secret Access Code</label>
+          <div className="space-y-3">
+            <div className="flex justify-between items-end px-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Secret Access Code</label>
+              {code && (
+                <span className={`text-[9px] font-black uppercase tracking-tighter ${code.length < 4 ? "text-neon-red" :
+                    /^\d+$/.test(code) ? "text-yellow-500" : "text-neon-green"
+                  }`}>
+                  {code.length < 4 ? "Too Short" : /^\d+$/.test(code) ? "Medium Security" : "Hardened"}
+                </span>
+              )}
+            </div>
             <input
               type="password"
               value={code}
@@ -639,6 +648,18 @@ function VaultSaveModal({ isOpen, onClose, password, onSave }: { isOpen: boolean
               placeholder="Set a 4+ digit secret code..."
               className="w-full rounded-xl border border-border bg-secondary/30 px-4 py-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-mono"
             />
+            {code && (
+              <div className="h-1 w-full bg-secondary rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: code.length < 4 ? "33%" : /^\d+$/.test(code) ? "66%" : "100%",
+                    backgroundColor: code.length < 4 ? "#f43f5e" : /^\d+$/.test(code) ? "#eab308" : "#10b981"
+                  }}
+                  className="h-full"
+                />
+              </div>
+            )}
           </div>
 
           <button

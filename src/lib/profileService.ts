@@ -127,7 +127,12 @@ export const profileService = {
             .from('avatars')
             .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+            if (uploadError.message.includes('Bucket not found')) {
+                console.error('CRITICAL: Supabase Storage bucket "avatars" not found. Create it in the Dashboard and set it to public.');
+            }
+            throw uploadError;
+        }
 
         // 2. Get public URL
         const { data: { publicUrl } } = supabase.storage
@@ -183,6 +188,15 @@ export const profileService = {
         const { error } = await supabase
             .from('vault_entries')
             .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+    },
+
+    async updateVaultEntry(id: string, newPassword: string) {
+        const { error } = await supabase
+            .from('vault_entries')
+            .update({ password: newPassword })
             .eq('id', id);
 
         if (error) throw error;

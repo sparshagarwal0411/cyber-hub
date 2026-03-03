@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2, Lock, Unlock, Trash2, Copy, Database, Key } from "lucide-react";
+import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2, Lock, Unlock, Trash2, Copy, Database, Key, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService, UserStats, ScanHistory, UserProfile, VaultEntry } from "@/lib/profileService";
 import { toast } from "sonner";
@@ -233,7 +233,7 @@ export default function Profile() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
-                    className="glass rounded-[2rem] border-2 border-primary/20 p-8 shadow-2xl relative overflow-hidden"
+                    className="glass rounded-[2rem] border-2 border-primary/20 p-8 shadow-2xl relative overflow-hidden mt-12"
                 >
                     <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                         <Lock className="h-32 w-32 text-primary" />
@@ -300,15 +300,22 @@ export default function Profile() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 relative z-10">
                             {vaultEntries.map((entry) => (
-                                <VaultCard key={entry.id} entry={entry} onDelete={async () => {
-                                    try {
-                                        await profileService.deleteVaultEntry(entry.id);
-                                        setVaultEntries(prev => prev.filter(e => e.id !== entry.id));
-                                        toast.success("Asset purged from vault");
-                                    } catch (error) {
-                                        toast.error("Failed to purge asset");
-                                    }
-                                }} />
+                                <VaultCard
+                                    key={entry.id}
+                                    entry={entry}
+                                    onDelete={async () => {
+                                        try {
+                                            await profileService.deleteVaultEntry(entry.id);
+                                            setVaultEntries(prev => prev.filter(e => e.id !== entry.id));
+                                            toast.success("Asset purged from vault");
+                                        } catch (error) {
+                                            toast.error("Failed to purge asset");
+                                        }
+                                    }}
+                                    onUpdate={(id, newPass) => {
+                                        setVaultEntries(prev => prev.map(e => e.id === id ? { ...e, password: newPass } : e));
+                                    }}
+                                />
                             ))}
                         </div>
                     )}
@@ -318,8 +325,25 @@ export default function Profile() {
     );
 }
 
-function VaultCard({ entry, onDelete }: { entry: VaultEntry; onDelete: () => void }) {
+function VaultCard({ entry, onDelete, onUpdate }: { entry: VaultEntry; onDelete: () => void; onUpdate: (id: string, newPass: string) => void }) {
     const [revealed, setRevealed] = useState(false);
+    const [editing, setEditing] = useState(false);
+    const [newPassword, setNewPassword] = useState(entry.password);
+    const [updating, setUpdating] = useState(false);
+
+    const handleSave = async () => {
+        setUpdating(true);
+        try {
+            await profileService.updateVaultEntry(entry.id, newPassword);
+            onUpdate(entry.id, newPassword);
+            setEditing(false);
+            toast.success("Credential updated");
+        } catch (error) {
+            toast.error("Failed to update credential");
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     return (
         <div className="glass rounded-2xl border border-border/50 p-5 group hover:border-primary/30 transition-all flex flex-col justify-between h-full">
@@ -329,6 +353,15 @@ function VaultCard({ entry, onDelete }: { entry: VaultEntry; onDelete: () => voi
                         <Key className="h-4 w-4" />
                     </div>
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => {
+                                setEditing(!editing);
+                                if (!editing) setNewPassword(entry.password);
+                            }}
+                            className={`p-1.5 transition-colors rounded-md ${editing ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-primary/10'}`}
+                        >
+                            <Pencil className="h-3.5 w-3.5" />
+                        </button>
                         <button
                             onClick={() => {
                                 navigator.clipboard.writeText(entry.password);
@@ -347,17 +380,35 @@ function VaultCard({ entry, onDelete }: { entry: VaultEntry; onDelete: () => voi
                     </div>
                 </div>
                 <h4 className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] mb-1">{entry.service_name}</h4>
-                <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-border/50 group/pass">
-                    <div className="font-mono text-sm tracking-tighter flex-1 truncate">
-                        {revealed ? entry.password : "••••••••••••••••"}
+
+                {editing ? (
+                    <div className="flex gap-2">
+                        <input
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="flex-1 bg-background/50 p-3 rounded-xl border border-primary/50 font-mono text-sm outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <button
+                            onClick={handleSave}
+                            disabled={updating}
+                            className="bg-primary text-primary-foreground p-3 rounded-xl hover:glow-primary transition-all disabled:opacity-50"
+                        >
+                            {updating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setRevealed(!revealed)}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        {revealed ? <Eye className="h-4 w-4" /> : <Eye className="h-4 w-4 opacity-30" />}
-                    </button>
-                </div>
+                ) : (
+                    <div className="flex items-center gap-3 bg-background/50 p-3 rounded-xl border border-border/50 group/pass">
+                        <div className="font-mono text-sm tracking-tighter flex-1 truncate">
+                            {revealed ? entry.password : "••••••••••••••••"}
+                        </div>
+                        <button
+                            onClick={() => setRevealed(!revealed)}
+                            className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            {revealed ? <Eye className="h-4 w-4" /> : <Eye className="h-4 w-4 opacity-30" />}
+                        </button>
+                    </div>
+                )}
             </div>
             <div className="mt-4 pt-4 border-t border-border/30 text-[10px] font-mono text-muted-foreground">
                 SAVED: {new Date(entry.created_at).toLocaleDateString()}

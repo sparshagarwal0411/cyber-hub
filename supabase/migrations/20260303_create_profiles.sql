@@ -9,14 +9,17 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" 
 ON public.profiles FOR SELECT 
 USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
 CREATE POLICY "Users can insert their own profile" 
 ON public.profiles FOR INSERT 
 WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
 CREATE POLICY "Users can update their own profile" 
 ON public.profiles FOR UPDATE 
 USING (auth.uid() = id);
@@ -47,11 +50,13 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Storage Policies for 'avatars' bucket
 -- Allow public access to read avatars
+DROP POLICY IF EXISTS "Avatar images are publicly accessible" ON storage.objects;
 CREATE POLICY "Avatar images are publicly accessible"
 ON storage.objects FOR SELECT
 USING (bucket_id = 'avatars');
 
 -- Allow authenticated users to upload their own avatar
+DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
 CREATE POLICY "Users can upload their own avatar"
 ON storage.objects FOR INSERT
 WITH CHECK (
@@ -60,10 +65,12 @@ WITH CHECK (
 );
 
 -- Allow users to update/delete their own avatar
+DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;
 CREATE POLICY "Users can update their own avatar"
 ON storage.objects FOR UPDATE
 USING (bucket_id = 'avatars' AND auth.uid() = (storage.foldername(name))[1]::uuid);
 
+DROP POLICY IF EXISTS "Users can delete their own avatar" ON storage.objects;
 CREATE POLICY "Users can delete their own avatar"
 ON storage.objects FOR DELETE
 USING (bucket_id = 'avatars' AND auth.uid() = (storage.foldername(name))[1]::uuid);

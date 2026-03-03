@@ -7,7 +7,7 @@ import Navbar from "./components/Navbar";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -32,10 +32,10 @@ const App = () => (
             }
           />
           <Route
-            path="/admin"
+            path="/profile"
             element={
               <ProtectedRoute>
-                <Admin />
+                <Profile />
               </ProtectedRoute>
             }
           />

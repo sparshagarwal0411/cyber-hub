@@ -1,0 +1,84 @@
+import { supabase } from "@/integrations/supabase/client";
+
+export interface ScanHistory {
+    id: string;
+    type: 'URL' | 'PDF' | 'Visual';
+    target: string;
+    risk: string;
+    result_details: string;
+    created_at: string;
+}
+
+export interface UserStats {
+    total_scans: number;
+    pdf_scans: number;
+    url_scans: number;
+    visual_scans: number;
+}
+
+export const profileService = {
+    async logScan(type: 'URL' | 'PDF' | 'Visual', target: string, risk: string, details: string) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        try {
+            // Log the scan
+            await supabase.from('scans').insert({
+                user_id: user.id,
+                type,
+                target,
+                risk,
+                result_details: details
+            });
+
+            // Increment stats using the RPC function
+            await supabase.rpc('increment_scan_stats', {
+                u_id: user.id,
+                s_type: type
+            });
+        } catch (error) {
+            console.error('Error logging scan:', error);
+        }
+    },
+
+    async getStats(): Promise<UserStats> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase
+            .from('user_stats')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
+
+        if (error) {
+            console.error('Error fetching stats:', error);
+            return { total_scans: 0, pdf_scans: 0, url_scans: 0, visual_scans: 0 };
+        }
+
+        return {
+            total_scans: data.total_scans,
+            pdf_scans: data.pdf_scans,
+            url_scans: data.url_scans,
+            visual_scans: data.visual_scans
+        };
+    },
+
+    async getHistory(): Promise<ScanHistory[]> {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data, error } = await supabase
+            .from('scans')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching history:', error);
+            return [];
+        }
+
+        return data as ScanHistory[];
+    }
+};

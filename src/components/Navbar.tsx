@@ -20,7 +20,7 @@ export default function Navbar() {
     { label: "Home", path: "/" },
     ...(user ? [
       { label: "Dashboard", path: "/dashboard" },
-      { label: "Admin", path: "/admin" },
+      { label: "Profile", path: "/profile" },
     ] : []),
   ];
 

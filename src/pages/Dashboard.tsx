@@ -1,9 +1,92 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon } from "lucide-react";
+import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { virusTotal } from "@/lib/virusTotal";
 import { geminiService } from "@/lib/gemini";
+import { profileService } from "@/lib/profileService";
+import { useEffect } from "react";
+
+// --- Analysis Loading Component ---
+function AnalysisLoading({ messages, duration = 8000 }: { messages: string[], duration?: number }) {
+  const [msgIndex, setMsgIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(9.9);
+
+  useEffect(() => {
+    const msgInterval = setInterval(() => {
+      setMsgIndex((prev) => (prev + 1) % messages.length);
+    }, 1800);
+
+    const timerInterval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0.1) return 0.1;
+        return parseFloat((prev - 0.1).toFixed(1));
+      });
+    }, 80);
+
+    return () => {
+      clearInterval(msgInterval);
+      clearInterval(timerInterval);
+    };
+  }, [messages.length]);
+
+  return (
+    <div className="flex flex-col items-center justify-center py-12 space-y-8">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse" />
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="relative z-10 p-4 rounded-full border-2 border-dashed border-primary/30"
+        >
+          <div className="p-4 rounded-full bg-primary/10">
+            <RefreshCw className="h-10 w-10 text-primary animate-spin-slow" />
+          </div>
+        </motion.div>
+        <div className="absolute -top-2 -right-2 bg-background border border-border px-2 py-0.5 rounded-md shadow-lg">
+          <span className="text-[10px] font-mono font-black text-primary">{timeLeft}s</span>
+        </div>
+      </div>
+
+      <div className="text-center space-y-2">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={msgIndex}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="text-sm font-black text-foreground tracking-widest uppercase italic"
+          >
+            {messages[msgIndex]}
+          </motion.p>
+        </AnimatePresence>
+        <div className="flex gap-1 justify-center">
+          {messages.map((_, i) => (
+            <div
+              key={i}
+              className={`h-1 w-4 rounded-full transition-all duration-500 ${i === msgIndex ? "bg-primary w-8" : "bg-secondary"}`}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="w-64 space-y-1.5">
+        <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">
+          <span>Processing byte-streams</span>
+          <span>{Math.round((1 - timeLeft / 10) * 100)}%</span>
+        </div>
+        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]"
+            initial={{ width: "0%" }}
+            animate={{ width: "100%" }}
+            transition={{ duration: duration / 1000, ease: "linear" }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // --- Vigilante Chatbot ---
 function VigilanteChatbot() {
@@ -109,6 +192,9 @@ function VisualGuard() {
         } else {
           toast.warning(`Threat detected: ${analysis.risk} risk`);
         }
+
+        // Log the scan
+        profileService.logScan('Visual', file.name, analysis.risk, analysis.details);
       } catch (error: any) {
         toast.error(error.message || "Failed to analyze image");
       } finally {
@@ -140,19 +226,16 @@ function VisualGuard() {
       </div>
 
       {scanning && (
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-primary font-medium">
-            <Activity className="h-4 w-4 animate-pulse" /> Decomposing visual layers...
-          </div>
-          <div className="w-48 h-1.5 bg-secondary rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: "100%" }}
-              transition={{ duration: 2.5 }}
-            />
-          </div>
-        </div>
+        <AnalysisLoading
+          messages={[
+            "Initialising vision core...",
+            "Decomposing visual layers...",
+            "Scanning for QR obfuscation...",
+            "Analyzing pixel patterns...",
+            "Detecting social engineering cues..."
+          ]}
+          duration={5000}
+        />
       )}
 
       {result && (
@@ -218,6 +301,9 @@ function PDFChecker() {
           issues
         });
         toast.success("PDF analysis complete");
+
+        // Log the scan
+        profileService.logScan('PDF', file.name, risk, issues.join(', '));
       } catch (error: any) {
         toast.error(error.message || "Failed to scan PDF");
       } finally {
@@ -272,20 +358,16 @@ function PDFChecker() {
       )}
 
       {analyzing && (
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
-            <Search className="h-12 w-12 text-primary animate-pulse" />
-            <motion.div
-              className="absolute inset-0 border-2 border-primary rounded-full"
-              animate={{ scale: [1, 1.5, 1], opacity: [1, 0, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-          <div className="text-center">
-            <p className="text-sm font-bold text-primary animate-pulse">Scanning Byte-Streams...</p>
-            <p className="text-[10px] text-muted-foreground uppercase mt-1">Analyzing macros, scripts, & metadata</p>
-          </div>
-        </div>
+        <AnalysisLoading
+          messages={[
+            "Initialising analysis engine...",
+            "Extracting metadata...",
+            "Scanning byte-streams...",
+            "Checking macro integrity...",
+            "Verifying digital signatures..."
+          ]}
+          duration={10000}
+        />
       )}
 
       {result && (
@@ -377,6 +459,9 @@ function URLRadar() {
         }
       });
       toast.success("URL scan complete");
+
+      // Log the scan
+      profileService.logScan('URL', url, risk, issues.join(', '));
     } catch (error: any) {
       toast.error(error.message || "Failed to scan URL");
     } finally {
@@ -410,10 +495,16 @@ function URLRadar() {
       </div>
 
       {checking && (
-        <div className="flex flex-col items-center py-8">
-          <Radar className="h-10 w-10 text-primary animate-spin mb-4" />
-          <p className="text-sm font-bold text-primary animate-pulse tracking-widest uppercase">Analyzing Infrastructure...</p>
-        </div>
+        <AnalysisLoading
+          messages={[
+            "Initialising radar...",
+            "Resolving domain DNS...",
+            "Checking SSL certificates...",
+            "Scanning for redirection loops...",
+            "Verifying server reputation..."
+          ]}
+          duration={8000}
+        />
       )}
 
       {result && (

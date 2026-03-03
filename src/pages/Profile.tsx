@@ -113,7 +113,7 @@ export default function Profile() {
 
                         <div className="text-center md:text-left space-y-1">
                             <h1 className="text-3xl font-black text-foreground tracking-tighter uppercase italic">
-                                Operative: <span className="text-primary not-italic">{user?.email?.split('@')[0] || "CyberGuardian"}</span>
+                                Operator: <span className="text-primary not-italic">{user?.email?.split('@')[0] || "CyberGuardian"}</span>
                             </h1>
                             <p className="text-muted-foreground font-mono text-xs">{user?.email}</p>
                             <div className="flex items-center justify-center md:justify-start gap-4 mt-2">
@@ -133,16 +133,20 @@ export default function Profile() {
                     {statCards.map((stat, i) => (
                         <motion.div
                             key={stat.label}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: i * 0.1 }}
-                            className="glass rounded-2xl border border-border/50 p-6 relative group hover:border-primary/30 transition-all"
+                            whileHover={{ y: -5, scale: 1.02 }}
+                            className="glass rounded-2xl border border-border/50 p-6 relative group hover:border-primary/40 transition-all hover:shadow-[0_0_40px_rgba(var(--primary-rgb),0.1)] overflow-hidden"
                         >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`p-2 rounded-lg bg-secondary ${stat.color}`}>
-                                    <stat.icon className="h-5 w-5" />
+                            <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-2 rounded-lg bg-secondary ${stat.color} group-hover:glow-primary transition-all duration-500`}>
+                                        <stat.icon className="h-5 w-5" />
+                                    </div>
+                                    <div className="text-[10px] font-mono text-muted-foreground opacity-50">LIVE</div>
                                 </div>
-                                <div className="text-[10px] font-mono text-muted-foreground">LIVE</div>
                             </div>
                             <div className="text-3xl font-black text-foreground">{loading ? "..." : stat.value}</div>
                             <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">{stat.label}</div>
@@ -346,7 +350,13 @@ function VaultCard({ entry, onDelete, onUpdate }: { entry: VaultEntry; onDelete:
     };
 
     return (
-        <div className="glass rounded-2xl border border-border/50 p-5 group hover:border-primary/30 transition-all flex flex-col justify-between h-full">
+        <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="glass rounded-2xl border border-border/50 p-5 group hover:border-primary/30 transition-all flex flex-col justify-between h-full hover-scale hover:shadow-xl hover:shadow-primary/5"
+        >
             <div>
                 <div className="flex justify-between items-start mb-4">
                     <div className="p-2 rounded-lg bg-secondary text-primary">
@@ -413,6 +423,6 @@ function VaultCard({ entry, onDelete, onUpdate }: { entry: VaultEntry; onDelete:
             <div className="mt-4 pt-4 border-t border-border/30 text-[10px] font-mono text-muted-foreground">
                 SAVED: {new Date(entry.created_at).toLocaleDateString()}
             </div>
-        </div>
+        </motion.div>
     );
 }

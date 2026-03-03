@@ -38,12 +38,17 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-primary/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <Shield className="h-7 w-7 text-primary transition-all group-hover:drop-shadow-[0_0_8px_hsl(var(--neon-cyan))]" />
+          <motion.div
+            whileHover={{ rotate: [0, -10, 10, 0] }}
+            transition={{ duration: 0.5 }}
+          >
+            <Shield className="h-7 w-7 text-primary transition-all group-hover:drop-shadow-[0_0_8px_hsl(var(--neon-cyan))]" />
+          </motion.div>
           <span className="text-lg font-bold tracking-tight text-foreground">
-            Cyber<span className="text-primary">Shield</span>
+            Cyber<span className="text-primary glow-text">Shield</span>
           </span>
         </Link>
 
@@ -53,10 +58,15 @@ export default function Navbar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`text-sm font-medium transition-colors hover:text-primary ${location.pathname === item.path ? "text-primary" : "text-muted-foreground"
+              className={`text-sm font-bold uppercase tracking-widest transition-all hover:text-primary relative group ${location.pathname === item.path ? "text-primary" : "text-muted-foreground"
                 }`}
             >
               {item.label}
+              <motion.div
+                className={`absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full ${location.pathname === item.path ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                layoutId="navUnderline"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
             </Link>
           ))}
           {user ? (

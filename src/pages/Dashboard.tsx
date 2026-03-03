@@ -10,7 +10,7 @@ import { useEffect } from "react";
 // --- Analysis Loading Component ---
 function AnalysisLoading({ messages, duration = 8000 }: { messages: string[], duration?: number }) {
   const [msgIndex, setMsgIndex] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(9.9);
+  const [timeLeft, setTimeLeft] = useState(parseFloat((duration / 1000).toFixed(1)));
 
   useEffect(() => {
     const msgInterval = setInterval(() => {
@@ -22,7 +22,7 @@ function AnalysisLoading({ messages, duration = 8000 }: { messages: string[], du
         if (prev <= 0.1) return 0.1;
         return parseFloat((prev - 0.1).toFixed(1));
       });
-    }, 80);
+    }, 100);
 
     return () => {
       clearInterval(msgInterval);
@@ -380,7 +380,7 @@ function PDFChecker() {
             "Checking macro integrity...",
             "Verifying digital signatures..."
           ]}
-          duration={10000}
+          duration={38000}
         />
       )}
 
@@ -536,7 +536,7 @@ function URLRadar() {
             "Scanning for redirection loops...",
             "Verifying server reputation..."
           ]}
-          duration={8000}
+          duration={18000}
         />
       )}
 
@@ -635,7 +635,7 @@ function VaultSaveModal({ isOpen, onClose, password, onSave }: { isOpen: boolean
               <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Secret Access Code</label>
               {code && (
                 <span className={`text-[9px] font-black uppercase tracking-tighter ${code.length < 4 ? "text-neon-red" :
-                    /^\d+$/.test(code) ? "text-yellow-500" : "text-neon-green"
+                  /^\d+$/.test(code) ? "text-yellow-500" : "text-neon-green"
                   }`}>
                   {code.length < 4 ? "Too Short" : /^\d+$/.test(code) ? "Medium Security" : "Hardened"}
                 </span>
@@ -825,8 +825,9 @@ export default function Dashboard() {
   const ActiveComponent = tools.find((t) => t.id === activeTab)?.component || VigilanteChatbot;
 
   return (
-    <div className="min-h-screen bg-background cyber-grid pt-24 px-4 pb-12">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-background cyber-grid pt-24 px-4 pb-12 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none opacity-20 scan-line" />
+      <div className="container mx-auto max-w-6xl relative z-10">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -850,8 +851,8 @@ export default function Dashboard() {
               <button
                 key={tool.id}
                 onClick={() => setActiveTab(tool.id)}
-                className={`flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all whitespace-nowrap group relative overflow-hidden ${activeTab === tool.id
-                  ? "glass bg-primary/10 border-2 border-primary/50 shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]"
+                className={`flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all whitespace-nowrap group relative overflow-hidden hover-scale ${activeTab === tool.id
+                  ? "glass-strong bg-primary/10 border-2 border-primary/50 shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]"
                   : "hover:bg-secondary/50 border-2 border-transparent"
                   }`}
               >
@@ -861,7 +862,7 @@ export default function Dashboard() {
                     className="absolute inset-0 bg-primary/5 pointer-events-none"
                   />
                 )}
-                <div className={`p-2 rounded-lg transition-colors ${activeTab === tool.id ? "bg-primary text-primary-foreground shadow-lg" : "bg-secondary text-muted-foreground group-hover:text-primary"}`}>
+                <div className={`p-2 rounded-lg transition-all duration-300 ${activeTab === tool.id ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] rotate-3" : "bg-secondary text-muted-foreground group-hover:text-primary"}`}>
                   <tool.icon className="h-5 w-5 shrink-0" />
                 </div>
                 <div className="flex-1 min-w-0">

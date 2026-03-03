@@ -28,10 +28,14 @@ export default function Navbar() {
     <nav className="fixed top-0 left-0 right-0 z-50 glass-strong">
       <div className="container mx-auto flex items-center justify-between px-6 py-4">
         <Link to="/" className="flex items-center gap-2.5 group">
-          <Shield className="h-7 w-7 text-primary transition-all group-hover:drop-shadow-[0_0_8px_hsl(var(--neon-cyan))]" />
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Cyber<span className="text-primary">Shield</span>
-          </span>
+          <motion.span
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-lg font-bold tracking-tight text-foreground"
+          >
+            Cyber <span className="text-primary">Hub</span>
+          </motion.span>
         </Link>
 
         {/* Desktop */}

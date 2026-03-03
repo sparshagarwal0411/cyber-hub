@@ -144,24 +144,39 @@ export default function Landing() {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <motion.div
+            variants={{
+              hidden: { opacity: 0 },
+              show: {
+                opacity: 1,
+                transition: {
+                  staggerChildren: 0.15
+                }
+              }
+            }}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true }}
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
             {features.map((feature, i) => (
               <motion.div
                 key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass rounded-xl p-6 neon-border group hover:border-primary/40 transition-all"
+                variants={{
+                  hidden: { opacity: 0, y: 30 },
+                  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+                }}
+                whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                className="glass rounded-xl p-6 neon-border group hover:border-primary/40 transition-all hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.2)]"
               >
-                <div className="inline-flex rounded-lg bg-primary/10 p-3 mb-4">
-                  <feature.icon className="h-6 w-6 text-primary" />
+                <div className="inline-flex rounded-lg bg-primary/10 p-3 mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                  <feature.icon className="h-6 w-6 text-primary group-hover:text-inherit" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-2">{feature.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{feature.desc}</p>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -192,8 +207,7 @@ export default function Landing() {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Shield className="h-4 w-4 text-primary" />
-            CyberShield © 2026
+            Cyber Hub © 2026
           </div>
           <div className="text-xs text-muted-foreground font-mono">
             SECURITY-BY-DESIGN • DATA PRIVACY COMPLIANT

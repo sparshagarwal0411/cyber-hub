@@ -825,7 +825,7 @@ const tools = [
   { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", brief: "Analyze domain infrastructure, SSL certificates, and server reputation for potential threats.", component: URLRadar },
   { id: "password", icon: Key, label: "Identity Shield", desc: "Secure vault & entropy", brief: "Password entropy analysis with AI-generated secure mnemonics and an encrypted cyber vault.", component: IdentityShield },
   { id: "deepdrop", icon: Send, label: "Deep Drop", desc: "Encrypted secure exchange", brief: "Send self-destructing, encrypted messages or links that 'burn after reading' for ultimate privacy.", component: DeepDrop },
-  { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Visualize real-time simulated cyber attack vectors and telemetry across the global digital landscape.", component: ThreatMap },
+  { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Real-time visualization of the global threat landscape. Monitored by our distributed sensor network to detect SQLi, DDoS, and phishing vectors with millisecond precision.", component: ThreatMap },
 ];
 
 export default function Dashboard() {

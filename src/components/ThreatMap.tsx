@@ -167,19 +167,85 @@ export function ThreatMap() {
                     <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
                 </Canvas>
 
+                <div className="absolute top-12 left-4 z-10 flex flex-col gap-2 max-w-[180px]">
+                    <div className="glass bg-background/40 border border-white/5 rounded-lg p-3 backdrop-blur-md">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Activity className="h-3 w-3 text-primary" />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-foreground">Vector Breakdown</span>
+                        </div>
+                        <div className="space-y-1.5">
+                            {[
+                                { label: "SQL Injection", val: 42, color: "bg-neon-red" },
+                                { label: "DDoS Protocol", val: 28, color: "bg-primary" },
+                                { label: "Phishing/XSS", val: 30, color: "bg-neon-cyan" }
+                            ].map(v => (
+                                <div key={v.label} className="space-y-1">
+                                    <div className="flex justify-between text-[8px] font-bold text-muted-foreground uppercase">
+                                        <span>{v.label}</span>
+                                        <span>{v.val}%</span>
+                                    </div>
+                                    <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${v.val}%` }}
+                                            className={`h-full ${v.color}`}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="glass bg-background/40 border border-white/5 rounded-lg p-3 backdrop-blur-md">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Shield className="h-3 w-3 text-neon-green" />
+                            <span className="text-[9px] font-black uppercase tracking-widest text-foreground">System Integrity</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="space-y-0.5">
+                                <div className="text-[7px] font-bold text-muted-foreground uppercase">Grid Load</div>
+                                <div className="text-[10px] font-black text-neon-green">OPTIMAL</div>
+                            </div>
+                            <div className="space-y-0.5 text-right">
+                                <div className="text-[7px] font-bold text-muted-foreground uppercase">Latency</div>
+                                <div className="text-[10px] font-black text-primary">12ms</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Legend Overlay */}
                 <div className="absolute bottom-4 left-4 z-10 grid gap-2">
                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
-                        <div className="h-2 w-2 rounded-full bg-neon-red" /> Inbound Attack
+                        <div className="h-2 w-2 rounded-full bg-neon-red shadow-[0_0_8px_rgba(244,63,94,0.5)]" /> Inbound Attack
                     </div>
                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase">
-                        <div className="h-2 w-2 rounded-full bg-neon-cyan" /> Secure Node
+                        <div className="h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" /> MITM Intercept
                     </div>
+                </div>
+
+                <div className="absolute bottom-4 right-4 z-10 text-right hidden sm:block">
+                    <p className="text-[8px] font-bold text-muted-foreground/50 uppercase leading-relaxed max-w-[150px]">
+                        Global Sensor Network v2.5 Online<br />
+                        Mapping 1.2M active endpoints<br />
+                        Zero-day heuristic engine: active
+                    </p>
                 </div>
             </div>
 
             {/* Telemetry Sidebar */}
             <div className="flex flex-col gap-4">
+                {/* IQ Overview Card */}
+                <div className="glass bg-primary/5 border border-primary/20 rounded-xl p-4 hidden lg:block">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Zap className="h-4 w-4 text-primary" />
+                        <span className="text-xs font-black uppercase tracking-tighter italic text-foreground">Grid Intelligence</span>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground leading-relaxed font-medium">
+                        Our distributed honey-pot network captures over 50TB of threat telemetry daily. This map visualizes high-confidence incursions redirected through our scrubbers.
+                    </p>
+                </div>
+
                 {/* Stats Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
                     <div className="glass bg-neon-red/5 border border-neon-red/20 rounded-xl p-4">

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2, Lock, Unlock, Trash2, Copy, Database, Key, Check } from "lucide-react";
+import { Shield, Activity, FileText, Link2, Eye, Calendar, User as UserIcon, AlertTriangle, CheckCircle, Clock, Pencil, Loader2, Lock, Unlock, Trash2, Copy, Database, Key, Check, Bot } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { profileService, UserStats, ScanHistory, UserProfile, VaultEntry } from "@/lib/profileService";
 import { toast } from "sonner";
@@ -191,6 +191,7 @@ export default function Profile() {
                                                     {item.type === 'PDF' && <FileText className="h-4 w-4 text-neon-cyan" />}
                                                     {item.type === 'URL' && <Link2 className="h-4 w-4 text-neon-green" />}
                                                     {item.type === 'Visual' && <Eye className="h-4 w-4 text-neon-purple" />}
+                                                    {item.type === 'AI' && <Bot className="h-4 w-4 text-primary" />}
                                                     <span className="font-bold text-foreground/80">{item.type}</span>
                                                 </div>
                                             </td>

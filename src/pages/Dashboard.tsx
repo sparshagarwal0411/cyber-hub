@@ -96,39 +96,40 @@ function VigilanteChatbot() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = input.trim();
     setMessages((prev) => [...prev, { role: "user", content: userMsg }]);
     setInput("");
     setIsTyping(true);
 
-    // Dynamic analysis based on text
-    setTimeout(() => {
-      setIsTyping(false);
-      let tactics = [];
-      let riskLevel = "LOW";
-      let recommendation = "Looks safe, but always double-check the sender's identity.";
+    try {
+      const result = await geminiService.analyzeMessage(userMsg);
 
-      const text = userMsg.toLowerCase();
-      if (text.includes("urgent") || text.includes("immediately") || text.includes("asap")) tactics.push("Urgency/Scarcity manipulation");
-      if (text.includes("bank") || text.includes("irs") || text.includes("support")) tactics.push("Authority/Brand impersonation");
-      if (text.includes("http") || text.includes("click") || text.includes("link")) tactics.push("Suspicious link/Call-to-action");
-      if (text.includes("password") || text.includes("ssn") || text.includes("otp")) tactics.push("Credential harvesting attempt");
-
-      if (tactics.length > 0) riskLevel = tactics.length >= 2 ? "CRITICAL" : "HIGH";
-      if (riskLevel === "HIGH" || riskLevel === "CRITICAL") {
-        recommendation = "Do not click any links or share information. Verify the sender through official channels. This message exhibits classic phishing patterns.";
-      }
+      const content = `**Threat Analysis Complete**\n\n🔍 **Tactics Detected:**\n${result.threats.map(t => `- ${t}`).join("\n") || "- No malicious patterns detected"}\n\n⚠️ **Risk Level:** ${result.risk}\n\n**Analysis:** ${result.details}\n\n**Recommendation:** ${result.recommendation}`;
 
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `**Threat Analysis Complete**\n\n🔍 **Tactics Detected:**\n${tactics.map(t => `- ${t}`).join("\n") || "- None detected (Normal pattern)"}\n\n⚠️ **Risk Level:** ${riskLevel}\n\n**Recommendation:** ${recommendation}`,
+          content,
         },
       ]);
-    }, 1500);
+
+      // Log the AI scan
+      profileService.logScan('AI', 'Message Analysis', result.risk, result.details);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to analyze message");
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "System error: Failed to connect to the intelligence core. Please check your configuration.",
+        },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (

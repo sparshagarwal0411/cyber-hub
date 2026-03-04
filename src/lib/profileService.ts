@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface ScanHistory {
     id: string;
-    type: 'URL' | 'PDF' | 'Visual';
+    type: 'URL' | 'PDF' | 'Visual' | 'AI';
     target: string;
     risk: string;
     result_details: string;
@@ -28,7 +28,7 @@ export interface VaultEntry {
 }
 
 export const profileService = {
-    async logScan(type: 'URL' | 'PDF' | 'Visual', target: string, risk: string, details: string) {
+    async logScan(type: 'URL' | 'PDF' | 'Visual' | 'AI', target: string, risk: string, details: string) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 

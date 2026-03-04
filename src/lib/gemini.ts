@@ -9,6 +9,14 @@ export interface VisualAnalysisResult {
     risk: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 }
 
+export interface TextAnalysisResult {
+    safe: boolean;
+    threats: string[];
+    risk: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    details: string;
+    recommendation: string;
+}
+
 export const geminiService = {
     async analyzeImage(file: File): Promise<VisualAnalysisResult> {
         if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
@@ -16,7 +24,7 @@ export const geminiService = {
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         // Convert file to base64
         const base64Data = await new Promise<string>((resolve, reject) => {
@@ -67,6 +75,49 @@ export const geminiService = {
         } catch (error: any) {
             console.error("Gemini Analysis Error:", error);
             throw new Error("Failed to analyze image with Gemini. " + (error.message || ""));
+        }
+    },
+
+    async analyzeMessage(message: string): Promise<TextAnalysisResult> {
+        if (!API_KEY || API_KEY === 'your_gemini_api_key_here') {
+            throw new Error('Gemini API key is not configured.');
+        }
+
+        const genAI = new GoogleGenerativeAI(API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+        const prompt = `
+      Analyze this message, email, or text for cybersecurity threats and social engineering tactics.
+      
+      Look for:
+      1. Phishing patterns and deceptive links.
+      2. Urgency, scarcity, or fear-based manipulation.
+      3. Brand impersonation or authority claims.
+      4. Requests for sensitive info (passwords, OTPs, SSNs).
+      5. Grammatical errors typical of automated phishing.
+      
+      Message: "${message}"
+      
+      Respond in strict JSON format:
+      {
+        "safe": boolean,
+        "risk": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+        "threats": ["List of specific tactics found"],
+        "details": "A concise explanation of why this is a threat or why it is safe.",
+        "recommendation": "One clear action for the user (e.g., 'Delete and block sender')."
+      }
+    `;
+
+        try {
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            let text = response.text();
+
+            text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(text);
+        } catch (error: any) {
+            console.error("Gemini Text Analysis Error:", error);
+            throw new Error("Failed to analyze message with Gemini.");
         }
     }
 };

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Shield, Radar, Eye, Key, Bot, ArrowRight, ChevronDown } from "lucide-react";
 
-const CyberGlobe = lazy(() => import("../components/CyberGlobe"));
+import { ThreatMap } from "../components/ThreatMap";
 
 const features = [
   {
@@ -82,17 +82,9 @@ export default function Landing() {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.3 }}
-            className="relative h-[400px] lg:h-[500px]"
+            className="relative h-[500px] lg:h-[600px] w-full"
           >
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center h-full">
-                  <Shield className="h-16 w-16 text-primary animate-pulse" />
-                </div>
-              }
-            >
-              <CyberGlobe />
-            </Suspense>
+            <ThreatMap />
           </motion.div>
         </div>
 

@@ -823,6 +823,7 @@ const tools = [
   { id: "visual", icon: Eye, label: "Visual Guard", desc: "Image & QR scanner", brief: "Scan images, QR codes, or screenshots for hidden phishing attempts and fraudulent visual cues.", component: VisualGuard },
   { id: "pdf", icon: FileSearch, label: "PDF Armor", desc: "Exploit & macro detector", brief: "In-depth analysis of PDF documents to detect malicious macros, hidden scripts, and exploits.", component: PDFChecker },
   { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", brief: "Analyze domain infrastructure, SSL certificates, and server reputation for potential threats.", component: URLRadar },
+  { id: "password", icon: Key, label: "Identity Shield", desc: "Secure vault & entropy", brief: "Password entropy analysis with AI-generated secure mnemonics and an encrypted cyber vault.", component: IdentityShield },
   { id: "deepdrop", icon: Send, label: "Deep Drop", desc: "Encrypted secure exchange", brief: "Send self-destructing, encrypted messages or links that 'burn after reading' for ultimate privacy.", component: DeepDrop },
   { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Visualize real-time simulated cyber attack vectors and telemetry across the global digital landscape.", component: ThreatMap },
 ];

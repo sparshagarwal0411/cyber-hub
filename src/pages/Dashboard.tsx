@@ -1,11 +1,15 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw, Save, X } from "lucide-react";
+import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw, Save, X, Database, Globe as GlobeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { virusTotal } from "@/lib/virusTotal";
 import { geminiService } from "@/lib/gemini";
 import { profileService } from "@/lib/profileService";
 import { useEffect } from "react";
+import { BreachPulse } from "@/components/BreachPulse";
+import { IPRadar } from "@/components/IPRadar";
+import { DeepDrop } from "@/components/DeepDrop";
+import { ThreatMap } from "@/components/ThreatMap";
 
 // --- Analysis Loading Component ---
 function AnalysisLoading({ messages, duration = 8000 }: { messages: string[], duration?: number }) {
@@ -815,10 +819,12 @@ function IdentityShield() {
 // --- Dashboard ---
 const tools = [
   { id: "chatbot", icon: Bot, label: "Vigilante Chatbot", desc: "Social engineering analyzer", brief: "Analyze suspicious messages or emails for social engineering tactics and rating threat levels.", component: VigilanteChatbot },
+  { id: "breach", icon: Database, label: "Breach Pulse", desc: "Identity compromise auditor", brief: "Cross-reference your email against billions of leaked records to identify potential identity exposure.", component: BreachPulse },
   { id: "visual", icon: Eye, label: "Visual Guard", desc: "Image & QR scanner", brief: "Scan images, QR codes, or screenshots for hidden phishing attempts and fraudulent visual cues.", component: VisualGuard },
   { id: "pdf", icon: FileSearch, label: "PDF Armor", desc: "Exploit & macro detector", brief: "In-depth analysis of PDF documents to detect malicious macros, hidden scripts, and exploits.", component: PDFChecker },
   { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", brief: "Analyze domain infrastructure, SSL certificates, and server reputation for potential threats.", component: URLRadar },
-  { id: "identity", icon: Key, label: "Identity Shield", desc: "Military-grade key analyzer", brief: "Evaluate password strength and generate high-entropy mnemonics for secure vault keys.", component: IdentityShield },
+  { id: "deepdrop", icon: Send, label: "Deep Drop", desc: "Encrypted secure exchange", brief: "Send self-destructing, encrypted messages or links that 'burn after reading' for ultimate privacy.", component: DeepDrop },
+  { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Visualize real-time simulated cyber attack vectors and telemetry across the global digital landscape.", component: ThreatMap },
 ];
 
 export default function Dashboard() {

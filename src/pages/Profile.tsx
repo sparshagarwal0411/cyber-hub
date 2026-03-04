@@ -19,6 +19,35 @@ export default function Profile() {
     const [unlocking, setUnlocking] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    const vaultHealth = (() => {
+        if (!vaultUnlocked || vaultEntries.length === 0) return null;
+
+        let weak = 0;
+        let hardened = 0;
+        const passwords = vaultEntries.map(e => e.password);
+        const uniquePasswords = new Set(passwords);
+        const reused = passwords.length - uniquePasswords.size;
+
+        vaultEntries.forEach(entry => {
+            let charset = 0;
+            const p = entry.password;
+            if (/[a-z]/.test(p)) charset += 26;
+            if (/[A-Z]/.test(p)) charset += 26;
+            if (/[0-9]/.test(p)) charset += 10;
+            if (/[^a-zA-Z0-9]/.test(p)) charset += 32;
+            const entropy = Math.round(p.length * Math.log2(charset || 1));
+
+            if (entropy < 55) weak++;
+            else if (entropy >= 75) hardened++;
+        });
+
+        const healthFactor = (hardened / vaultEntries.length) * 100;
+        const penaltyFactor = ((weak + reused) / vaultEntries.length) * 50;
+        const score = Math.max(0, Math.min(100, Math.round(healthFactor - penaltyFactor + 50)));
+
+        return { score, weak, hardened, reused };
+    })();
+
     useEffect(() => {
         async function fetchData() {
             try {
@@ -166,7 +195,7 @@ export default function Profile() {
                         <h2 className="text-xl font-bold text-foreground uppercase italic pb-1 border-b-2 border-primary/30">Investigation Log</h2>
                     </div>
 
-                    <div className="overflow-x-auto scrollbar-hide">
+                    <div className="overflow-x-auto scrollbar-hide max-h-[450px] overflow-y-auto pr-2 custom-scrollbar">
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-border/50">
@@ -243,6 +272,55 @@ export default function Profile() {
                     <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
                         <Lock className="h-32 w-32 text-primary" />
                     </div>
+
+                    {vaultUnlocked && vaultHealth && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10 relative z-10">
+                            <div className="lg:col-span-1 glass bg-primary/5 rounded-2xl border border-primary/20 p-6 flex flex-col items-center justify-center text-center">
+                                <div className="relative mb-4">
+                                    <svg className="w-32 h-32 transform -rotate-90">
+                                        <circle cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-secondary" />
+                                        <motion.circle
+                                            cx="64" cy="64" r="58" stroke="currentColor" strokeWidth="8" fill="transparent"
+                                            className={vaultHealth.score > 70 ? "text-neon-green" : vaultHealth.score > 40 ? "text-yellow-500" : "text-neon-red"}
+                                            strokeDasharray={364.4}
+                                            initial={{ strokeDashoffset: 364.4 }}
+                                            animate={{ strokeDashoffset: 364.4 - (364.4 * vaultHealth.score) / 100 }}
+                                            transition={{ duration: 1.5, ease: "easeOut" }}
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-3xl font-black text-foreground">{vaultHealth.score}%</span>
+                                        <span className="text-[10px] font-bold text-muted-foreground uppercase">Health</span>
+                                    </div>
+                                </div>
+                                <h3 className="text-sm font-black uppercase tracking-widest italic">Vault Integrity</h3>
+                            </div>
+
+                            <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                                <div className="glass bg-neon-green/5 border border-neon-green/20 rounded-2xl p-4 flex flex-col justify-center">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase">Hardened</span>
+                                        <CheckCircle className="h-4 w-4 text-neon-green" />
+                                    </div>
+                                    <div className="text-2xl font-black text-neon-green">{vaultHealth.hardened} Assets</div>
+                                </div>
+                                <div className="glass bg-neon-red/5 border border-neon-red/20 rounded-2xl p-4 flex flex-col justify-center">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase">At Risk</span>
+                                        <AlertTriangle className="h-4 w-4 text-neon-red" />
+                                    </div>
+                                    <div className="text-2xl font-black text-neon-red">{vaultHealth.weak} Weak</div>
+                                </div>
+                                <div className="glass bg-yellow-500/5 border border-yellow-500/20 rounded-2xl p-4 flex flex-col justify-center col-span-2">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <span className="text-xs font-bold text-muted-foreground uppercase">Redundancy Check</span>
+                                        <Database className="h-4 w-4 text-yellow-500" />
+                                    </div>
+                                    <div className="text-xl font-black text-yellow-500">{vaultHealth.reused} Duplicated Passwords Detected</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between mb-8 relative z-10">
                         <div className="flex items-center gap-3">

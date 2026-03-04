@@ -818,6 +818,7 @@ function IdentityShield() {
 
 // --- Dashboard ---
 const tools = [
+  { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Real-time visualization of the global threat landscape. Monitored by our distributed sensor network to detect SQLi, DDoS, and phishing vectors with millisecond precision.", component: ThreatMap },
   { id: "chatbot", icon: Bot, label: "Vigilante Chatbot", desc: "Social engineering analyzer", brief: "Analyze suspicious messages or emails for social engineering tactics and rating threat levels.", component: VigilanteChatbot },
   { id: "breach", icon: Database, label: "Breach Pulse", desc: "Identity compromise auditor", brief: "Cross-reference your email against billions of leaked records to identify potential identity exposure.", component: BreachPulse },
   { id: "visual", icon: Eye, label: "Visual Guard", desc: "Image & QR scanner", brief: "Scan images, QR codes, or screenshots for hidden phishing attempts and fraudulent visual cues.", component: VisualGuard },
@@ -825,12 +826,11 @@ const tools = [
   { id: "url", icon: Radar, label: "URL Radar", desc: "Domain infrastructure intel", brief: "Analyze domain infrastructure, SSL certificates, and server reputation for potential threats.", component: URLRadar },
   { id: "password", icon: Key, label: "Identity Shield", desc: "Secure vault & entropy", brief: "Password entropy analysis with AI-generated secure mnemonics and an encrypted cyber vault.", component: IdentityShield },
   { id: "deepdrop", icon: Send, label: "Deep Drop", desc: "Encrypted secure exchange", brief: "Send self-destructing, encrypted messages or links that 'burn after reading' for ultimate privacy.", component: DeepDrop },
-  { id: "map", icon: GlobeIcon, label: "Global Threat Map", desc: "Live attack surface monitor", brief: "Real-time visualization of the global threat landscape. Monitored by our distributed sensor network to detect SQLi, DDoS, and phishing vectors with millisecond precision.", component: ThreatMap },
 ];
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("chatbot");
-  const ActiveComponent = tools.find((t) => t.id === activeTab)?.component || VigilanteChatbot;
+  const [activeTab, setActiveTab] = useState("map");
+  const ActiveComponent = tools.find((t) => t.id === activeTab)?.component || ThreatMap;
 
   return (
     <div className="min-h-screen bg-background cyber-grid pt-24 px-4 pb-12 relative overflow-hidden">
@@ -852,75 +852,117 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-[300px_1fr] gap-8">
-          {/* Tool tabs sidebar */}
-          <div className="flex lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
-            {tools.map((tool) => (
-              <button
-                key={tool.id}
-                onClick={() => setActiveTab(tool.id)}
-                className={`flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all whitespace-nowrap group relative overflow-hidden hover-scale ${activeTab === tool.id
-                  ? "glass-strong bg-primary/10 border-2 border-primary/50 shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]"
-                  : "hover:bg-secondary/50 border-2 border-transparent"
-                  }`}
-              >
-                {activeTab === tool.id && (
-                  <motion.div
-                    layoutId="activeGlow"
-                    className="absolute inset-0 bg-primary/5 pointer-events-none"
-                  />
-                )}
-                <div className={`p-2 rounded-lg transition-all duration-300 ${activeTab === tool.id ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] rotate-3" : "bg-secondary text-muted-foreground group-hover:text-primary"}`}>
-                  <tool.icon className="h-5 w-5 shrink-0" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-black tracking-tight ${activeTab === tool.id ? "text-foreground" : "text-muted-foreground"}`}>
-                    {tool.label}
-                  </div>
-                  <div className={`text-[10px] uppercase font-bold tracking-wider truncate transition-colors ${activeTab === tool.id ? "text-primary/80" : "text-muted-foreground/50"}`}>
-                    {tool.desc}
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-
-          {/* Active tool display */}
-          <AnimatePresence mode="wait">
+        {activeTab === "map" ? (
+          <div className="space-y-8">
             <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20, filter: "blur(10px)" }}
-              animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, x: -20, filter: "blur(10px)" }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-              className="glass rounded-[2rem] border-2 border-border/50 p-8 min-h-[600px] flex flex-col shadow-2xl relative overflow-hidden backdrop-blur-xl"
+              key="map-hero"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass rounded-[2rem] border-2 border-primary/30 p-8 shadow-[0_0_50px_rgba(var(--primary-rgb),0.1)] relative overflow-hidden backdrop-blur-xl"
             >
-              {/* Background decorative elements */}
-              <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-neon-cyan/5 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="mb-6 pb-6 border-b border-border/50 relative z-10">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary">
-                    {(() => {
-                      const tool = tools.find(t => t.id === activeTab);
-                      const ToolIcon = tool?.icon || Bot;
-                      return <ToolIcon className="h-5 w-5" />;
-                    })()}
+              <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      <GlobeIcon className="h-5 w-5" />
+                    </div>
+                    <h2 className="text-xl font-black text-foreground uppercase tracking-tight italic">
+                      Global Threat Map
+                    </h2>
                   </div>
-                  <h2 className="text-xl font-black text-foreground uppercase tracking-tight italic">
-                    {tools.find(t => t.id === activeTab)?.label}
-                  </h2>
+                  <p className="text-sm text-muted-foreground font-medium max-w-2xl">
+                    Real-time visualization of the global threat landscape.
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground font-medium max-w-2xl leading-relaxed">
-                  {tools.find(t => t.id === activeTab)?.brief}
-                </p>
+                <div className="flex gap-2 self-start md:self-center overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+                  {tools.map((tool) => (
+                    <button
+                      key={tool.id}
+                      onClick={() => setActiveTab(tool.id)}
+                      className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${activeTab === tool.id
+                          ? "bg-primary text-primary-foreground border-primary glow-primary"
+                          : "bg-secondary/50 text-muted-foreground border-transparent hover:border-primary/30"
+                        }`}
+                    >
+                      {tool.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-
-              <ActiveComponent />
+              <ThreatMap />
             </motion.div>
-          </AnimatePresence>
-        </div>
+          </div>
+        ) : (
+          <div className="grid lg:grid-cols-[300px_1fr] gap-8">
+            {/* Tool tabs sidebar */}
+            <div className="flex lg:flex-col gap-3 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => setActiveTab(tool.id)}
+                  className={`flex items-center gap-4 rounded-2xl px-5 py-4 text-left transition-all whitespace-nowrap group relative overflow-hidden hover-scale ${activeTab === tool.id
+                    ? "glass-strong bg-primary/10 border-2 border-primary/50 shadow-[0_0_25px_rgba(var(--primary-rgb),0.15)]"
+                    : "hover:bg-secondary/50 border-2 border-transparent"
+                    }`}
+                >
+                  {activeTab === tool.id && (
+                    <motion.div
+                      layoutId="activeGlow"
+                      className="absolute inset-0 bg-primary/5 pointer-events-none"
+                    />
+                  )}
+                  <div className={`p-2 rounded-lg transition-all duration-300 ${activeTab === tool.id ? "bg-primary text-primary-foreground shadow-[0_0_15px_rgba(var(--primary-rgb),0.5)] rotate-3" : "bg-secondary text-muted-foreground group-hover:text-primary"}`}>
+                    <tool.icon className="h-5 w-5 shrink-0" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-sm font-black tracking-tight ${activeTab === tool.id ? "text-foreground" : "text-muted-foreground"}`}>
+                      {tool.label}
+                    </div>
+                    <div className={`text-[10px] uppercase font-bold tracking-wider truncate transition-colors ${activeTab === tool.id ? "text-primary/80" : "text-muted-foreground/50"}`}>
+                      {tool.desc}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Active tool display */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 20, filter: "blur(10px)" }}
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                exit={{ opacity: 0, x: -20, filter: "blur(10px)" }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+                className="glass rounded-[2rem] border-2 border-border/50 p-8 min-h-[600px] flex flex-col shadow-2xl relative overflow-hidden backdrop-blur-xl"
+              >
+                {/* Background decorative elements */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-neon-cyan/5 rounded-full blur-3xl pointer-events-none" />
+
+                <div className="mb-6 pb-6 border-b border-border/50 relative z-10">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                      {(() => {
+                        const tool = tools.find(t => t.id === activeTab);
+                        const ToolIcon = tool?.icon || Bot;
+                        return <ToolIcon className="h-5 w-5" />;
+                      })()}
+                    </div>
+                    <h2 className="text-xl font-black text-foreground uppercase tracking-tight italic">
+                      {tools.find(t => t.id === activeTab)?.label}
+                    </h2>
+                  </div>
+                  <p className="text-sm text-muted-foreground font-medium max-w-2xl leading-relaxed">
+                    {tools.find(t => t.id === activeTab)?.brief}
+                  </p>
+                </div>
+
+                <ActiveComponent />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </div>
   );

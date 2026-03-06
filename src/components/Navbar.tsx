@@ -22,6 +22,13 @@ export default function Navbar() {
       }
     }
     fetchProfile();
+
+    const handleAvatarUpdate = () => {
+      fetchProfile();
+    };
+
+    window.addEventListener("avatar-updated", handleAvatarUpdate);
+    return () => window.removeEventListener("avatar-updated", handleAvatarUpdate);
   }, [user]);
 
   const handleLogout = async () => {

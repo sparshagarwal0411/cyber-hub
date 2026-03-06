@@ -106,6 +106,7 @@ export default function Profile() {
                                         try {
                                             const url = await profileService.uploadAvatar(file);
                                             setProfile({ avatar_url: url });
+                                            window.dispatchEvent(new Event("avatar-updated"));
                                             toast.success("Profile picture updated!");
                                         } catch (error: any) {
                                             console.error("Upload error:", error);

@@ -1,26 +1,52 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Sphere, Stars, Float, PerspectiveCamera, Html } from "@react-three/drei";
+import { Sphere, Stars, Float, PerspectiveCamera, Html, OrbitControls } from "@react-three/drei";
 import * as THREE from "three";
 import { Activity, Shield, AlertCircle, Globe as GlobeIcon, Zap, Terminal } from "lucide-react";
 
+// --- Constants: Geographic Coordinates ---
+const CITY_COORDS: Record<string, THREE.Vector3> = {
+    "New York": latLongToVector3(40.7128, -74.0060, 2),
+    "London": latLongToVector3(51.5074, -0.1278, 2),
+    "Tokyo": latLongToVector3(35.6762, 139.6503, 2),
+    "Berlin": latLongToVector3(52.5200, 13.4050, 2),
+    "Sydney": latLongToVector3(-33.8688, 151.2093, 2),
+    "Moscow": latLongToVector3(55.7558, 37.6173, 2),
+    "Mumbai": latLongToVector3(19.0760, 72.8777, 2),
+    "Singapore": latLongToVector3(1.3521, 103.8198, 2),
+    "San Francisco": latLongToVector3(37.7749, -122.4194, 2),
+    "São Paulo": latLongToVector3(-23.5505, -46.6333, 2)
+};
+
+function latLongToVector3(lat: number, lon: number, radius: number) {
+    const phi = (90 - lat) * (Math.PI / 180);
+    const theta = (lon + 180) * (Math.PI / 180);
+    return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+    );
+}
+
 // --- Sub-component: Attack Arcs ---
-function AttackArc({ start, end, color = "#ff4d4d" }: { start: THREE.Vector3, end: THREE.Vector3, color?: string }) {
+function AttackArc({ start, end, color = "#ff4d4d", duration = 3 }: { start: THREE.Vector3, end: THREE.Vector3, color?: string, duration?: number }) {
     const curve = useMemo(() => {
         const mid = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
         const distance = start.distanceTo(end);
-        mid.normalize().multiplyScalar(2 + distance * 0.5); // Arc height
+        mid.normalize().multiplyScalar(2 + distance * 0.4); // Arc height proportional to distance
         return new THREE.QuadraticBezierCurve3(start, mid, end);
     }, [start, end]);
 
     const points = useMemo(() => curve.getPoints(50), [curve]);
     const lineRef = useRef<THREE.Line>(null);
+    const [visible, setVisible] = useState(true);
 
     useFrame(({ clock }) => {
         if (lineRef.current) {
-            const time = (clock.getElapsedTime() * 0.5) % 1;
+            const time = (clock.getElapsedTime() * (1 / duration)) % 1;
             lineRef.current.geometry.setDrawRange(0, Math.floor(time * 50));
+            (lineRef.current.material as THREE.LineBasicMaterial).opacity = Math.sin(time * Math.PI) * 0.8;
         }
     });
 
@@ -34,8 +60,31 @@ function AttackArc({ start, end, color = "#ff4d4d" }: { start: THREE.Vector3, en
                     itemSize={3}
                 />
             </bufferGeometry>
-            <lineBasicMaterial attach="material" color={color} linewidth={2} transparent opacity={0.6} />
+            <lineBasicMaterial attach="material" color={color} linewidth={2} transparent opacity={0.6} blending={THREE.AdditiveBlending} />
         </line>
+    );
+}
+
+// --- Sub-component: Scanner Sweep ---
+function Scanner() {
+    const scannerRef = useRef<THREE.Mesh>(null);
+    useFrame(({ clock }) => {
+        if (scannerRef.current) {
+            scannerRef.current.rotation.y = clock.getElapsedTime() * 0.5;
+        }
+    });
+
+    return (
+        <mesh ref={scannerRef} rotation={[Math.PI / 2, 0, 0]}>
+            <torusGeometry args={[2.1, 0.01, 16, 100]} />
+            <meshStandardMaterial
+                color="#00d4ff"
+                transparent
+                opacity={0.2}
+                emissive="#00d4ff"
+                emissiveIntensity={2}
+            />
+        </mesh>
     );
 }
 
@@ -58,33 +107,34 @@ function PulsePoint({ position, color = "#ff4d4d" }: { position: THREE.Vector3, 
     );
 }
 
+// --- Sub-component: Danger Zones (Heat-map) ---
+function DangerZones() {
+    const zones = useMemo(() => [
+        { pos: CITY_COORDS["Tokyo"], size: 0.15, intensity: 1 },
+        { pos: CITY_COORDS["New York"], size: 0.2, intensity: 0.8 },
+        { pos: CITY_COORDS["London"], size: 0.12, intensity: 0.6 }
+    ], []);
+
+    return (
+        <group>
+            {zones.map((zone, i) => (
+                <mesh key={i} position={zone.pos}>
+                    <sphereGeometry args={[zone.size, 16, 16]} />
+                    <meshBasicMaterial
+                        color="#ff4d4d"
+                        transparent
+                        opacity={0.1 * zone.intensity}
+                        blending={THREE.AdditiveBlending}
+                    />
+                </mesh>
+            ))}
+        </group>
+    );
+}
+
 // --- Core Globe Component ---
-function ThreatGlobe() {
+function ThreatGlobe({ attacks }: { attacks: any[] }) {
     const groupRef = useRef<THREE.Group>(null);
-
-    useFrame(({ clock }) => {
-        if (groupRef.current) {
-            groupRef.current.rotation.y = clock.getElapsedTime() * 0.05;
-        }
-    });
-
-    const attacks = useMemo(() => {
-        const items = [];
-        const generatePoint = () => {
-            const phi = Math.random() * Math.PI * 2;
-            const theta = Math.random() * Math.PI;
-            const r = 2;
-            return new THREE.Vector3(
-                r * Math.sin(theta) * Math.cos(phi),
-                r * Math.sin(theta) * Math.sin(phi),
-                r * Math.cos(theta)
-            );
-        };
-        for (let i = 0; i < 8; i++) {
-            items.push({ start: generatePoint(), end: generatePoint(), id: i });
-        }
-        return items;
-    }, []);
 
     return (
         <group ref={groupRef}>
@@ -94,35 +144,40 @@ function ThreatGlobe() {
                     color="#0a192f"
                     wireframe
                     transparent
-                    opacity={0.15}
+                    opacity={0.2}
                     emissive="#00d4ff"
-                    emissiveIntensity={0.2}
+                    emissiveIntensity={0.5}
                 />
             </Sphere>
             <Sphere args={[1.98, 64, 64]}>
                 <meshPhongMaterial
                     color="#020617"
                     transparent
-                    opacity={0.8}
+                    opacity={0.92}
+                    shininess={100}
                 />
             </Sphere>
 
             {/* Atmosphere Glow */}
-            <Sphere args={[2.2, 32, 32]}>
+            <Sphere args={[2.2, 64, 64]}>
                 <meshPhongMaterial
                     color="#00d4ff"
                     transparent
-                    opacity={0.03}
+                    opacity={0.08}
                     side={THREE.BackSide}
+                    blending={THREE.AdditiveBlending}
                 />
             </Sphere>
+
+            <Scanner />
+            <DangerZones />
 
             {/* Attacks */}
             {attacks.map(attack => (
                 <group key={attack.id}>
-                    <AttackArc start={attack.start} end={attack.end} />
-                    <PulsePoint position={attack.start} />
-                    <PulsePoint position={attack.end} />
+                    <AttackArc start={attack.start} end={attack.end} color={attack.color} />
+                    <PulsePoint position={attack.start} color={attack.color} />
+                    <PulsePoint position={attack.end} color={attack.color} />
                 </group>
             ))}
         </group>
@@ -133,19 +188,37 @@ function ThreatGlobe() {
 export function ThreatMap() {
     const [events, setEvents] = useState<string[]>([]);
     const [stats, setStats] = useState({ blocked: 12402, active: 8 });
+    const [attacks, setAttacks] = useState<any[]>([]);
 
     useEffect(() => {
         const types = ["Mitigating SQLi", "DDoS Deflected", "Phishing Sinkholed", "Exploit Blocked", "Botnet Routed"];
-        const cities = ["New York", "London", "Tokyo", "Berlin", "Sydney", "Moscow", "Mumbai"];
+        const cities = Object.keys(CITY_COORDS);
 
         const interval = setInterval(() => {
-            const newEvent = `[${new Date().toLocaleTimeString()}] ${types[Math.floor(Math.random() * types.length)]} -> Core ${cities[Math.floor(Math.random() * cities.length)]}`;
+            const type = types[Math.floor(Math.random() * types.length)];
+            const fromCity = cities[Math.floor(Math.random() * cities.length)];
+            const toCity = cities[Math.floor(Math.random() * cities.length)];
+            if (fromCity === toCity) return;
+
+            const timestamp = new Date().toLocaleTimeString();
+            const newEvent = `[${timestamp}] ${type} -> Core ${toCity}`;
+
             setEvents(prev => [newEvent, ...prev].slice(0, 10));
             setStats(prev => ({
                 blocked: prev.blocked + Math.floor(Math.random() * 5),
                 active: Math.floor(Math.random() * 12) + 4
             }));
-        }, 3000);
+
+            // Add dynamic attack
+            const newAttack = {
+                id: Date.now(),
+                start: CITY_COORDS[fromCity],
+                end: CITY_COORDS[toCity],
+                color: type.includes("DDoS") ? "#00ffa3" : "#ff4d4d" // Primary or Neon Red
+            };
+
+            setAttacks(prev => [...prev.slice(-12), newAttack]); // Keep more active arcs
+        }, 2000); // Faster updates for more life
 
         return () => clearInterval(interval);
     }, []);
@@ -153,7 +226,7 @@ export function ThreatMap() {
     return (
         <div className="flex flex-col lg:grid lg:grid-cols-[1fr_300px] gap-6 h-full min-h-[500px] relative">
             {/* Map Canvas */}
-            <div className="relative rounded-2xl bg-black/40 border border-border/50 overflow-hidden min-h-[400px]">
+            <div className="relative rounded-2xl bg-black/40 border border-border/50 overflow-hidden min-h-[400px] shadow-[0_0_50px_rgba(0,212,255,0.1)]">
                 <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-neon-red animate-ping" />
                     <span className="text-[10px] font-black text-neon-red uppercase tracking-widest">Global Attack Surface: Active</span>
@@ -161,9 +234,18 @@ export function ThreatMap() {
 
                 <Canvas shadows dpr={[1, 2]}>
                     <PerspectiveCamera makeDefault position={[0, 0, 6]} fov={45} />
+                    <OrbitControls
+                        enableZoom={true}
+                        enablePan={false}
+                        autoRotate={true}
+                        autoRotateSpeed={0.5}
+                        makeDefault
+                        minDistance={3}
+                        maxDistance={10}
+                    />
                     <ambientLight intensity={0.5} />
-                    <pointLight position={[10, 10, 10]} intensity={1} color="#00d4ff" />
-                    <ThreatGlobe />
+                    <pointLight position={[10, 10, 10]} intensity={1.5} color="#00d4ff" />
+                    <ThreatGlobe attacks={attacks} />
                     <Stars radius={100} depth={50} count={5000} factor={4} saturation={0} fade speed={1} />
                 </Canvas>
 

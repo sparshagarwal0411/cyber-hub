@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Flame, Lock, Clock, Copy, Trash2, CheckCircle, Shield, Key, Loader2, AlertCircle } from "lucide-react";
+import { Send, Flame, Lock, Clock, Copy, Trash2, CheckCircle, Shield, Key, Loader2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { deepDropService } from "@/lib/deepDropService";
 import { toast } from "sonner";
 
@@ -8,7 +8,8 @@ export function DeepDrop() {
     const [content, setContent] = useState("");
     const [expiry, setExpiry] = useState(15);
     const [creating, setCreating] = useState(false);
-    const [dropId, setDropId] = useState<string | null>(null);
+    const [dropLink, setDropLink] = useState<string | null>(null);
+    const [isMelting, setIsMelting] = useState(false);
 
     const handleCreate = async () => {
         if (!content.trim()) {
@@ -18,34 +19,46 @@ export function DeepDrop() {
 
         setCreating(true);
         try {
-            const id = await deepDropService.createDrop(content, expiry);
-            setDropId(id);
-            toast.success("Secure Drop deployed to canal.");
+            const compositePath = await deepDropService.createDrop(content, expiry);
+            const url = `${window.location.origin}/drop/${compositePath}`;
+            setDropLink(url);
+
+            // Effect: Melting the input buffer
+            setIsMelting(true);
+            setTimeout(() => {
+                setContent("");
+                setIsMelting(false);
+            }, 1000);
+
+            toast.success("Stealth Drop deployed with E2E Encryption.");
         } catch (error: any) {
-            toast.error(error.message || "Failed to create Secure Drop");
+            toast.error(error.message || "Failed to create Stealth Drop");
         } finally {
             setCreating(false);
         }
     };
 
     const copyLink = () => {
-        const url = `${window.location.origin}/drop/${dropId}`;
-        navigator.clipboard.writeText(url);
-        toast.success("Secure link copied to clipboard.");
+        if (!dropLink) return;
+        navigator.clipboard.writeText(dropLink);
+        toast.success("Stealth link (E2E) copied to clipboard.");
     };
 
     return (
         <div className="flex flex-col gap-6 h-full">
             <div className="flex items-center justify-between pt-4 px-1">
-                <label className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">Secure Drop Canal</label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col">
+                    <label className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em]">Stealth Drop Canal</label>
+                    <span className="text-[10px] text-primary/60 font-mono">MIL-SPEC E2E AES-GCM</span>
+                </div>
+                <div className="flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full border border-primary/20">
                     <Shield className="h-3.5 w-3.5 text-primary" />
-                    <span className="text-[10px] font-black text-primary uppercase">E2E Encrypted</span>
+                    <span className="text-[10px] font-black text-primary uppercase">Lockdown Active</span>
                 </div>
             </div>
 
             <AnimatePresence mode="wait">
-                {!dropId ? (
+                {!dropLink ? (
                     <motion.div
                         key="create"
                         initial={{ opacity: 0 }}
@@ -54,22 +67,27 @@ export function DeepDrop() {
                         className="space-y-6"
                     >
                         <div className="relative group">
-                            <textarea
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                placeholder="Paste sensitive data, passwords, or secret links here..."
-                                className="w-full min-h-[200px] rounded-2xl border-2 border-border/50 bg-secondary/20 p-6 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all resize-none shadow-inner"
-                            />
-                            <div className="absolute bottom-4 right-4 text-[10px] font-mono text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity">
-                                {content.length} CHARS | SECURE BUFFER
-                            </div>
+                            <motion.div
+                                animate={isMelting ? { filter: "blur(20px)", opacity: 0, scale: 0.95 } : { filter: "blur(0px)", opacity: 1, scale: 1 }}
+                                transition={{ duration: 0.8, ease: "circIn" }}
+                            >
+                                <textarea
+                                    value={content}
+                                    onChange={(e) => setContent(e.target.value)}
+                                    placeholder="Paste sensitive data, passwords, or secret links here..."
+                                    className="w-full min-h-[200px] rounded-2xl border-2 border-border/50 bg-secondary/20 p-6 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all resize-none shadow-inner font-mono"
+                                />
+                                <div className="absolute bottom-4 right-4 text-[10px] font-mono text-muted-foreground opacity-50 group-hover:opacity-100 transition-opacity">
+                                    {content.length} BYTES | VOLATILE BUFFER
+                                </div>
+                            </motion.div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="bg-secondary/30 rounded-2xl p-4 border border-border flex flex-col gap-3">
                                 <div className="flex items-center gap-2 px-1">
                                     <Clock className="h-4 w-4 text-primary" />
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Self-Destruction Timer</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Stealth Duration</span>
                                 </div>
                                 <div className="flex gap-2">
                                     {[5, 15, 30, 60].map(mins => (
@@ -88,10 +106,10 @@ export function DeepDrop() {
                             <div className="bg-secondary/30 rounded-2xl p-4 border border-border flex flex-col justify-center gap-2">
                                 <div className="flex items-center gap-2 px-1 text-neon-red">
                                     <Flame className="h-4 w-4" />
-                                    <span className="text-[10px] font-bold uppercase">Burn After Reading</span>
+                                    <span className="text-[10px] font-bold uppercase">Nuclear Purge</span>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground leading-tight px-1 font-medium">
-                                    The payload is permanently deleted from our servers the instant it is accessed.
+                                    Decryption triggers an immediate wipe. The key exists only in the link hash.
                                 </p>
                             </div>
                         </div>
@@ -99,9 +117,16 @@ export function DeepDrop() {
                         <button
                             onClick={handleCreate}
                             disabled={creating || !content}
-                            className="w-full py-5 rounded-2xl bg-primary text-sm font-black text-primary-foreground hover:glow-primary transition-all disabled:opacity-50 active:scale-95 shadow-2xl flex items-center justify-center gap-3"
+                            className="w-full py-5 rounded-2xl bg-primary text-sm font-black text-primary-foreground hover:glow-primary transition-all disabled:opacity-50 active:scale-95 shadow-2xl flex items-center justify-center gap-3 group"
                         >
-                            {creating ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Lock className="h-5 w-5" /> DEPLOY SECURE DROP</>}
+                            {creating ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <Lock className="h-5 w-5 group-hover:rotate-12 transition-transform" />
+                                    GENERATE STEALTH LINK
+                                </>
+                            )}
                         </button>
                     </motion.div>
                 ) : (
@@ -119,15 +144,16 @@ export function DeepDrop() {
                         </div>
 
                         <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black text-foreground uppercase tracking-widest italic">Drop Deployed</h3>
+                            <h3 className="text-2xl font-black text-foreground uppercase tracking-widest italic">Secret Encrypted</h3>
                             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                                The secure canal is open. Copy this link and share it. It will self-destruct in <span className="text-primary font-bold">{expiry} minutes</span> or after first access.
+                                The decryption key is embedded in the hash below. It will never touch the server.
+                                Purge in: <span className="text-primary font-bold">{expiry} minutes</span>.
                             </p>
                         </div>
 
                         <div className="w-full max-w-md p-2 bg-secondary/30 rounded-2xl border border-primary/30 flex items-center gap-2 shadow-xl backdrop-blur-xl">
-                            <div className="flex-1 px-4 py-3 font-mono text-xs text-primary truncate">
-                                {window.location.origin}/drop/{dropId}
+                            <div className="flex-1 px-4 py-3 font-mono text-[10px] text-primary truncate">
+                                {dropLink}
                             </div>
                             <button
                                 onClick={copyLink}
@@ -138,10 +164,10 @@ export function DeepDrop() {
                         </div>
 
                         <button
-                            onClick={() => { setDropId(null); setContent(""); }}
-                            className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest"
+                            onClick={() => { setDropLink(null); setContent(""); }}
+                            className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest mt-4"
                         >
-                            <Trash2 className="h-3.5 w-3.5" /> Purge Buffer & Create New
+                            <Trash2 className="h-3.5 w-3.5" /> Wipe Local Buffer & Reset
                         </button>
                     </motion.div>
                 )}
@@ -151,10 +177,11 @@ export function DeepDrop() {
             <div className="bg-neon-red/5 border border-neon-red/10 rounded-xl p-4 mt-auto">
                 <div className="flex items-center gap-3 text-neon-red mb-1">
                     <AlertCircle className="h-4 w-4" />
-                    <span className="text-[10px] font-black uppercase">Operation Notice</span>
+                    <span className="text-[10px] font-black uppercase">Stealth Protocol Notice</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground leading-snug">
-                    Dropped content is stored in volatile memory buffers. Once a drop is 'burned' or the timer expires, the data is unrecoverable via any technological means.
+                    This link uses **Client-Side Encryption**. If you lose the hash part of the link, the data is permanently lost.
+                    The server has zero access to the plain-text content.
                 </p>
             </div>
         </div>

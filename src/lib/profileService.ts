@@ -120,7 +120,7 @@ export const profileService = {
         if (!user) throw new Error("Not authenticated");
 
         const fileExt = file.name.split('.').pop();
-        const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+        const filePath = `${user.id}/${Math.random()}.${fileExt}`;
 
         // 1. Upload to storage
         const { error: uploadError } = await supabase.storage
@@ -139,11 +139,14 @@ export const profileService = {
             .from('avatars')
             .getPublicUrl(filePath);
 
-        // 3. Update profiles table
+        // 3. Update profiles table - Use upsert to ensure the row exists
         const { error: updateError } = await supabase
             .from('profiles')
-            .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
-            .eq('id', user.id);
+            .upsert({
+                id: user.id,
+                avatar_url: publicUrl,
+                updated_at: new Date().toISOString()
+            });
 
         if (updateError) throw updateError;
 

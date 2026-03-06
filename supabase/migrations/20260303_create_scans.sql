@@ -2,7 +2,7 @@
 CREATE TABLE IF NOT EXISTS public.scans (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    type TEXT NOT NULL CHECK (type IN ('URL', 'PDF', 'Visual')),
+    type TEXT NOT NULL CHECK (type IN ('URL', 'PDF', 'Visual', 'AI')),
     target TEXT NOT NULL,
     risk TEXT NOT NULL,
     result_details TEXT,
@@ -24,18 +24,22 @@ ALTER TABLE public.scans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_stats ENABLE ROW LEVEL SECURITY;
 
 -- Create Policies
+DROP POLICY IF EXISTS "Users can view their own scans" ON public.scans;
 CREATE POLICY "Users can view their own scans" 
 ON public.scans FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert their own scans" ON public.scans;
 CREATE POLICY "Users can insert their own scans" 
 ON public.scans FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can view their own stats" ON public.user_stats;
 CREATE POLICY "Users can view their own stats" 
 ON public.user_stats FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update their own stats" ON public.user_stats;
 CREATE POLICY "Users can update their own stats" 
 ON public.user_stats FOR ALL 
 USING (auth.uid() = user_id);

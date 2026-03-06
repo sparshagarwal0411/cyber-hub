@@ -139,16 +139,21 @@ export const profileService = {
             .from('avatars')
             .getPublicUrl(filePath);
 
-        // 3. Update profiles table - Use upsert to ensure the row exists
-        const { error: updateError } = await supabase
+        // 3. Update profiles table - Use upsert and return the data to check if it actually updated
+        const { data, error: updateError } = await supabase
             .from('profiles')
             .upsert({
                 id: user.id,
                 avatar_url: publicUrl,
                 updated_at: new Date().toISOString()
-            });
+            }, { onConflict: 'id' })
+            .select();
 
         if (updateError) throw updateError;
+
+        if (!data || data.length === 0) {
+            throw new Error("Failed to update profile. It either does not exist or RLS blocked the update.");
+        }
 
         return publicUrl;
     },

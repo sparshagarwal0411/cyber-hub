@@ -1,73 +1,106 @@
-# Welcome to your Lovable project
+# Cyber Guardian Hub 🛡️
 
-## Project info
+**Cyber Guardian Hub** is an advanced, all-in-one cybersecurity dashboard designed to provide enterprise-grade protection, threat intelligence, and secure asset management for modern digital operators. 
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Built with a stunning, high-performance interface, the platform consolidates critical security tools into one seamless experience.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🎯 Project Overview & Mission
 
-**Use Lovable**
+Our mission is to democratize cybersecurity by providing intuitive, powerful tools that visualize threats, secure communications, and analyze digital assets before they can cause harm. Whether you are an individual wanting to secure your personal data or a security professional monitoring global threats, Cyber Hub is your command center.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## ✨ Key Features & Capabilities
 
-**Use your preferred IDE**
+*(Perfect for presentation slides!)*
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 1. Global Threat Visualization (CyberGlobe & ThreatMap)
+- **Live Telemetry:** Interactive 3D visualization of global cyber threats in real-time.
+- **Attack Vectors:** Breakdowns of attack origins, targeting patterns, and system integrity telemetry.
+- **Situational Awareness:** Gives operators a bird's-eye view of the current global threat landscape.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 2. URL Radar & IP Intelligence
+- **Deep Scanning:** Instantly inspect questionable URLs and IP addresses for malicious activity.
+- **Reputation Scoring:** Analyzes domains against known threat databases to prevent phishing and malware infections.
 
-Follow these steps:
+### 3. Data Breach Pulse
+- **Exposure Detection:** Actively scans for compromised email addresses and credentials across known data breaches.
+- **Proactive Alerts:** Keeps users informed if their sensitive information has been leaked on the dark web or public forums.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 4. Deep Drop (Secure Communications)
+- **Military-Grade Encryption:** Utilizes AES-GCM End-to-End (E2E) encryption for sharing highly sensitive data.
+- **Stealth Capabilities:** Includes visual "burn" animations and automatic data destruction to ensure zero traces are left behind.
+- **Anonymous Drops:** Securely transfer payloads without compromising operator identity.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 5. Cyber Vault
+- **Encrypted Password Management:** A highly secure, local vault for storing credentials and sensitive access codes.
+- **Vault Health Analysis:** Automatically calculates password entropy, flags weak or reused passwords, and provides an overall "Vault Integrity" score.
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 6. Visual Guard (AI Image Analysis)
+- **Gemini-Powered AI:** Integrates advanced AI vision models to detect sophisticated phishing attempts hidden within images.
+- **QR Code Verification:** Scans and verifies QR codes before you scan them with your phone to prevent malicious routing.
+- **Social Engineering Detection:** Analyzes screenshots and images for common manipulative tactics.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+### 7. PDF Armor
+- **Document Sanctification:** Scans PDF files for malicious macros, embedded scripts, and hidden payloads before they are opened.
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🛠️ Technology Stack
 
-**Use GitHub Codespaces**
+Cyber Guardian Hub is built on a modern, high-performance tech stack:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- **Frontend Framework:** React with Vite & TypeScript
+- **Styling:** Tailwind CSS & Framer Motion (for buttery-smooth, dynamic animations)
+- **UI Components:** shadcn-ui (customized for a dark, cyber-aesthetic)
+- **Backend/Database:** Supabase (PostgreSQL, Row Level Security, Storage)
+- **Authentication:** Supabase Auth (Google, GitHub, and Email/Password)
+- **AI Integration:** Google Gemini 2.5 API
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 🚀 Getting Started
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Prerequisites
+- Node.js & npm installed
+- A Supabase Project (with `avatars` storage bucket configured)
+- Gemini API Key
 
-## How can I deploy this project?
+### Installation
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+1. **Clone the repository:**
+   ```sh
+   git clone https://github.com/sparshagarwal0411/cyber-hub.git
+   cd cyber-guardian-hub
+   ```
 
-## Can I connect a custom domain to my Lovable project?
+2. **Install dependencies:**
+   ```sh
+   npm install
+   ```
 
-Yes, you can!
+3. **Environment Setup:**
+   Create a `.env` file in the root directory and add your keys:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_GEMINI_API_KEY=your_gemini_api_key
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+4. **Run the Development Server:**
+   ```sh
+   npm run dev
+   ```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## 🔒 Security Posture
+
+- **Row Level Security (RLS):** Strict PostgreSQL policies ensure users can only access their own data.
+- **State-of-the-Art Encryption:** Client-side encryption ensures that intermediate servers cannot read sensitive payloads like Deep Drops.
+- **Zero-Trust Architecture:** Every action and API call is verified against authenticated sessions.
+
+---
+*Created by Sparsh Agarwal*

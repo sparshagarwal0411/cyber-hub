@@ -38,6 +38,7 @@ export default function Navbar() {
 
   const navItems = [
     { label: "Home", path: "/" },
+    { label: "Blog", path: "/blog" },
     ...(user ? [
       { label: "Dashboard", path: "/dashboard" },
       { label: "Profile", path: "/profile" },

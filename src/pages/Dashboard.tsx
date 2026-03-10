@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw, Save, X, Database, Globe as GlobeIcon, Loader2 } from "lucide-react";
+import { Bot, Eye, Radar, Key, Shield, Activity, Send, Upload, Link2, Lock, CheckCircle, AlertTriangle, XCircle, FileSearch, Copy, FileText, Search, ShieldAlert as ShieldIcon, RefreshCw, Save, X, Database, Globe as GlobeIcon } from "lucide-react";
 import { toast } from "sonner";
 import { virusTotal } from "@/lib/virusTotal";
 import { geminiService } from "@/lib/gemini";
@@ -589,7 +589,7 @@ function URLRadar() {
 }
 
 // --- Identity Shield Components ---
-function VaultSaveModal({ isOpen, onClose, password, onSave, saving }: { isOpen: boolean; onClose: () => void; password: string; onSave: (service: string, code: string) => void; saving?: boolean }) {
+function VaultSaveModal({ isOpen, onClose, password, onSave }: { isOpen: boolean; onClose: () => void; password: string; onSave: (service: string, code: string) => void }) {
   const [service, setService] = useState("");
   const [code, setCode] = useState("");
 
@@ -600,7 +600,7 @@ function VaultSaveModal({ isOpen, onClose, password, onSave, saving }: { isOpen:
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        onClick={() => !saving && onClose()}
+        onClick={onClose}
         className="absolute inset-0 bg-background/80 backdrop-blur-sm"
       />
       <motion.div
@@ -615,7 +615,7 @@ function VaultSaveModal({ isOpen, onClose, password, onSave, saving }: { isOpen:
             </div>
             <h3 className="text-xl font-bold text-foreground italic uppercase">Cyber Vault</h3>
           </div>
-          <button onClick={onClose} disabled={saving} className="text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50">
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -669,18 +669,10 @@ function VaultSaveModal({ isOpen, onClose, password, onSave, saving }: { isOpen:
 
           <button
             onClick={() => onSave(service, code)}
-            disabled={!service || !code || saving}
+            disabled={!service || !code}
             className="w-full mt-4 rounded-xl bg-primary py-4 text-sm font-bold text-primary-foreground hover:glow-primary transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {saving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" /> SECURE IN VAULT
-              </>
-            )}
+            <Save className="h-4 w-4" /> SECURE IN VAULT
           </button>
         </div>
       </motion.div>
@@ -728,20 +720,14 @@ function IdentityShield() {
 
   const handleVaultSave = async (service: string, code: string) => {
     setSaving(true);
-    const timeoutId = setTimeout(() => {
-      setSaving(false);
-      toast.error("Save timed out. Check your connection and try again.");
-    }, 15000);
     try {
       await profileService.saveToVault(service, password, code);
-      clearTimeout(timeoutId);
       toast.success("Password secured in your Cyber Vault");
       setIsVaultOpen(false);
     } catch (error) {
       console.error("Vault error:", error);
       toast.error("Failed to secure password");
     } finally {
-      clearTimeout(timeoutId);
       setSaving(false);
     }
   };
@@ -750,10 +736,9 @@ function IdentityShield() {
     <div className="flex flex-col gap-6 h-full py-4 relative">
       <VaultSaveModal
         isOpen={isVaultOpen}
-        onClose={() => !saving && setIsVaultOpen(false)}
+        onClose={() => setIsVaultOpen(false)}
         password={password}
         onSave={handleVaultSave}
-        saving={saving}
       />
       <div className="space-y-3">
         <label className="text-xs font-bold text-muted-foreground uppercase tracking-[0.2em] px-1">Vault Key Evaluator</label>

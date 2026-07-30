@@ -84,7 +84,7 @@ export const geminiService = {
         }
 
         const genAI = new GoogleGenerativeAI(API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `
       Analyze this message, email, or text for cybersecurity threats and social engineering tactics.
